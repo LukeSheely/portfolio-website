@@ -24,9 +24,10 @@ A full-stack portfolio website built with **React**, **Flask**, and **PostgreSQL
 | Backend | Python 3 + Flask + CORS | Render (free tier) |
 | Database | PostgreSQL 17 (raw SQL via psycopg2) | Supabase (free tier) |
 | Storage | AWS S3 (images) | AWS S3 (us-east-2) |
+| Email | AWS SES (contact form notifications) | AWS SES (us-east-1) |
 | Deployment | GitHub Actions + Git | GitHub |
 
-**Total monthly cost:** ~$0.50 (S3 storage only)
+**Total monthly cost:** ~$0.50 (S3 storage, SES is free tier)
 
 ## Features
 
@@ -146,16 +147,25 @@ This project is deployed using free-tier cloud services:
 - Public read access with CORS configured
 - Automatic uploads via admin panel
 
+### Email: AWS SES
+- Contact form notifications sent to sheelyl2@wwu.edu
+- Verified identity in us-east-1
+- Free tier: 62,000 emails/month
+
 See [`docs/deployment-guide.md`](docs/deployment-guide.md) for detailed deployment instructions.
 
 ## AWS Integration
 
-This project uses AWS S3 for production image storage:
+This project uses AWS services for production:
 
-- **S3** — All project images are stored in S3 (us-east-2) and served via public URLs
-- **SES** — Email notifications (optional, code ready in `backend/services/email.py`)
+- **S3** — ✅ Active — Project images stored in S3 (us-east-2) and served via public URLs
+- **SES** — ✅ Active — Email notifications for contact form submissions
 
-The S3 integration is active in production (`USE_LOCAL_STORAGE=false`). For local development, you can use local storage by setting `USE_LOCAL_STORAGE=true`.
+**Configuration:**
+- `USE_LOCAL_STORAGE=false` — S3 active for image storage
+- `USE_LOCAL_EMAIL=false` — SES active for email notifications
+
+For local development, you can use local fallbacks by setting these to `true`.
 
 See [`docs/aws-setup-guide.md`](docs/aws-setup-guide.md) for detailed AWS setup instructions.
 
@@ -198,9 +208,9 @@ See [`docs/aws-setup-guide.md`](docs/aws-setup-guide.md) for detailed AWS setup 
 - **Database:** PostgreSQL, SQL (raw queries, JOINs, aggregates, transactions)
 - **Frontend:** React, React Router, modern JavaScript (ES6+)
 - **Cloud:** Supabase, Render, Netlify, GitHub
-- **AWS:** boto3 SDK, S3 (deployed), SES integration (code ready)
+- **AWS:** boto3 SDK, S3 (deployed), SES (deployed)
 - **DevOps:** Git, environment configuration, deployment pipelines, CORS configuration
-- **Security:** Parameterized queries (SQL injection prevention), password-based admin auth
+- **Security:** Parameterized queries (SQL injection prevention), password-based admin auth, IAM permissions
 
 ## License
 

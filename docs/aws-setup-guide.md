@@ -14,9 +14,9 @@ This guide documents the AWS services integrated with your portfolio website.
 This codebase includes production-ready integration code for:
 
 - **S3** — ✅ **ACTIVE** — Project images stored in S3 (us-east-2)
-- **SES** — Optional — Send real emails instead of logging to console
+- **SES** — ✅ **ACTIVE** — Contact form email notifications (us-east-1)
 
-S3 is currently deployed and working. SES code is ready but not activated (using `USE_LOCAL_EMAIL=true`).
+Both S3 and SES are currently deployed and working in production.
 
 ---
 
@@ -98,49 +98,47 @@ Set `USE_LOCAL_STORAGE=true` in your `.env` file to save images locally without 
 
 ---
 
-## 2. SES — Email Notifications (Optional)
+## 2. SES — Email Notifications ✅ ACTIVE
 
 **What it does:** SES (Simple Email Service) sends emails programmatically. We use it to send yourself an email whenever someone submits the contact form.
 
-**Current setup:** Not active — using `USE_LOCAL_EMAIL=true` (logs to console)
+**Current setup:** ✅ Active — Sending notifications to sheelyl2@wwu.edu
 
-**Why activate it:** Instead of checking the database for new contact messages, SES sends you an instant email notification. It's a lightweight, serverless email solution.
+**Why it's used:** Instead of checking the database for new contact messages, SES sends instant email notifications. It's a lightweight, serverless email solution.
 
-### Setup Steps
+### Current Configuration
 
-1. Go to **AWS Console > SES > Verified Identities**
-2. Click **Create Identity**
-3. Choose **Email address** and enter your email
-4. Click the verification link in the email you receive
-5. (SES Sandbox) By default, you can only send TO verified email addresses. To send to anyone, request **Production Access:**
-   - Go to **SES > Account Dashboard > Request Production Access**
-   - Describe your use case (portfolio contact form)
-   - AWS typically approves within 24 hours
+**Region:** us-east-1
+**Verified Email:** sheelyl2@wwu.edu
+**Sender:** sheelyl2@wwu.edu
+**Recipient:** sheelyl2@wwu.edu
+**Status:** Active (sandbox mode - can only send to verified addresses)
 
-### Update .env
+### Setup Steps (Already Completed)
+
+1. ✅ Verified email address in SES (us-east-1)
+2. ✅ Added SES permissions to IAM user `portfolio-app`
+3. ✅ Updated Render environment variables
+4. ✅ Tested contact form - emails delivering successfully
+
+### Environment Variables (Production)
 
 ```
-SES_SENDER_EMAIL=noreply@yourdomain.com
-SES_RECIPIENT_EMAIL=your-verified-email@example.com
+SES_SENDER_EMAIL=sheelyl2@wwu.edu
+SES_RECIPIENT_EMAIL=sheelyl2@wwu.edu
 USE_LOCAL_EMAIL=false
+AWS_REGION=us-east-2 (for S3, SES uses us-east-1)
 ```
 
 ### IAM Permissions
 
-Your backend needs this policy to send emails:
+The `portfolio-app` IAM user has:
+- ✅ AmazonS3FullAccess (for image uploads)
+- ✅ AmazonSESFullAccess (for sending emails)
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "ses:SendEmail",
-      "Resource": "*"
-    }
-  ]
-}
-```
+### For Local Development
+
+Set `USE_LOCAL_EMAIL=true` in your `.env` file to log emails to console instead of sending via SES.
 
 ---
 
@@ -148,14 +146,14 @@ Your backend needs this policy to send emails:
 
 **What it does:** IAM (Identity and Access Management) controls who can access which AWS services. Proper IAM setup ensures your application only has the permissions it needs.
 
-**Current setup:** IAM user `portfolio-app` with AmazonS3FullAccess policy
+**Current setup:** IAM user `portfolio-app` with AmazonS3FullAccess and AmazonSESFullAccess policies
 
 **Best practices implemented:**
 
 1. ✅ Created dedicated IAM user (not using root account)
-2. ✅ Granted S3 access only
+2. ✅ Granted S3 and SES access only
 3. ✅ Access keys stored as environment variables on Render
-4. ⚠️ Using AmazonS3FullAccess (could be more restrictive)
+4. ⚠️ Using AWS managed policies (could be more restrictive with custom policies)
 
 ### Current IAM Policy
 
@@ -192,9 +190,9 @@ This policy restricts access to only the specific bucket needed.
 | S3 Storage | ~100MB images | ~$0.02 |
 | S3 Requests | ~1000 GET/month | ~$0.01 |
 | S3 Data Transfer | First 100GB/month free | $0.00 |
-| SES (if activated) | 62K emails/month (from EC2) | $0.10 per 1K emails |
+| SES | Contact form emails (~10-50/month) | $0.00 (free tier: 62K/month) |
 
-**Total:** ~$0.50/month (mostly S3 storage)
+**Total:** ~$0.50/month (S3 storage only, SES is free)
 
 ### Free Tier Details
 

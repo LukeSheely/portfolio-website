@@ -86,9 +86,9 @@ Scroll down to **Environment Variables** and add each of these:
 | `AWS_ACCESS_KEY_ID` | Your AWS access key |
 | `AWS_SECRET_ACCESS_KEY` | Your AWS secret key |
 | `LOCAL_UPLOAD_DIR` | `uploads` |
-| `SES_SENDER_EMAIL` | `noreply@example.com` |
-| `SES_RECIPIENT_EMAIL` | Your email |
-| `USE_LOCAL_EMAIL` | `true` |
+| `SES_SENDER_EMAIL` | `sheelyl2@wwu.edu` (verified in SES) |
+| `SES_RECIPIENT_EMAIL` | `sheelyl2@wwu.edu` |
+| `USE_LOCAL_EMAIL` | `false` |
 | `ADMIN_PASSWORD` | Choose a strong password |
 | `SECRET_KEY` | Random string (e.g., generate with `openssl rand -hex 32`) |
 
@@ -229,7 +229,44 @@ Render will automatically redeploy with the new settings.
 
 ---
 
-## Step 5: Update README with Live URLs
+## Step 5: AWS SES Setup (Email Notifications)
+
+### Verify Your Email
+
+1. Go to **AWS Console** → **SES** (Simple Email Service)
+2. Make sure you're in **us-east-1** region (top-right dropdown)
+3. Click **"Verified identities"** → **"Create identity"**
+4. Choose **"Email address"**
+5. Enter your email (e.g., `sheelyl2@wwu.edu`)
+6. Click **"Create identity"**
+7. Check your email and click the verification link
+
+### Add SES Permissions to IAM User
+
+1. Go to **IAM** → **Users** → **portfolio-app**
+2. Click **"Permissions"** → **"Add permissions"**
+3. Click **"Attach policies directly"**
+4. Search for **"AmazonSESFullAccess"**
+5. Check the box and click **"Add permissions"**
+
+### Update Render Environment Variables
+
+1. Go back to Render → Environment
+2. Update:
+   - `USE_LOCAL_EMAIL` = `false`
+   - `SES_SENDER_EMAIL` = Your verified email
+   - `SES_RECIPIENT_EMAIL` = Your verified email
+3. Save changes (Render will redeploy)
+
+### Test
+
+1. Go to your live site's contact page
+2. Submit a test message
+3. Check your email for the notification!
+
+---
+
+## Step 6: Update README with Live URLs
 
 Go back and update your `README.md` with the live URLs:
 
