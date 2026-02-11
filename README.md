@@ -4,16 +4,16 @@ A full-stack portfolio website built with **React**, **Flask**, and **PostgreSQL
 
 ## Live Demo
 
-🌐 **[View Live Site](https://courageous-dieffenbachia-6ef8eb.netlify.app/)**
+🌐 **[View Live Site](https://lukesheely.netlify.app/)**
 🔧 **Backend API:** https://portfolio-backend-zkb1.onrender.com
 
 ## Architecture
 
 ```
-┌─────────────┐     ┌──────────────┐     ┌──────────────┐
-│   React UI  │────▶│  Flask API   │────▶│  PostgreSQL  │
-│  (Netlify)  │     │  (Render)    │     │  (Supabase)  │
-└─────────────┘     └──────────────┘     └──────────────┘
+┌─────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   React UI  │────▶│  Flask API   │────▶│  PostgreSQL  │     │   AWS S3     │
+│  (Netlify)  │     │  (Render)    │     │  (Supabase)  │◀────│ (Images)     │
+└─────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
 ```
 
 ## Tech Stack
@@ -23,9 +23,10 @@ A full-stack portfolio website built with **React**, **Flask**, and **PostgreSQL
 | Frontend | React 18 + React Router + Vite | Netlify (free tier) |
 | Backend | Python 3 + Flask + CORS | Render (free tier) |
 | Database | PostgreSQL 17 (raw SQL via psycopg2) | Supabase (free tier) |
+| Storage | AWS S3 (images) | AWS S3 (us-east-2) |
 | Deployment | GitHub Actions + Git | GitHub |
 
-**AWS Integration:** The codebase includes production-ready S3 and SES integration code (see `backend/services/`) that can be activated by setting environment variables. Currently using local fallbacks to minimize costs during development.
+**Total monthly cost:** ~$0.50 (S3 storage only)
 
 ## Features
 
@@ -138,21 +139,25 @@ This project is deployed using free-tier cloud services:
 - Free static hosting with global CDN
 - Auto-deploys from GitHub on push
 - Environment variable: `VITE_API_URL` points to Render backend
+- Custom subdomain: lukesheely.netlify.app
+
+### Storage: AWS S3
+- Images stored in `portfolio-images-lukesheely` bucket (us-east-2)
+- Public read access with CORS configured
+- Automatic uploads via admin panel
 
 See [`docs/deployment-guide.md`](docs/deployment-guide.md) for detailed deployment instructions.
 
-## AWS Integration (Optional)
+## AWS Integration
 
-The codebase includes AWS service integrations that can be activated:
+This project uses AWS S3 for production image storage:
 
-- **S3** — Image upload/storage (code in `backend/services/s3.py`)
-- **SES** — Email notifications (code in `backend/services/email.py`)
+- **S3** — All project images are stored in S3 (us-east-2) and served via public URLs
+- **SES** — Email notifications (optional, code ready in `backend/services/email.py`)
 
-To activate, set up AWS services and update environment variables:
-- `USE_LOCAL_STORAGE=false` + configure S3 bucket
-- `USE_LOCAL_EMAIL=false` + configure SES
+The S3 integration is active in production (`USE_LOCAL_STORAGE=false`). For local development, you can use local storage by setting `USE_LOCAL_STORAGE=true`.
 
-See [`docs/aws-setup-guide.md`](docs/aws-setup-guide.md) for AWS setup instructions.
+See [`docs/aws-setup-guide.md`](docs/aws-setup-guide.md) for detailed AWS setup instructions.
 
 ## Project Structure
 
@@ -192,9 +197,9 @@ See [`docs/aws-setup-guide.md`](docs/aws-setup-guide.md) for AWS setup instructi
 - **Backend:** Python, Flask, REST API design, CORS
 - **Database:** PostgreSQL, SQL (raw queries, JOINs, aggregates, transactions)
 - **Frontend:** React, React Router, modern JavaScript (ES6+)
-- **Cloud:** Supabase, Render, Vercel, GitHub
-- **AWS:** boto3 SDK, S3, SES integration (code ready, not deployed)
-- **DevOps:** Git, environment configuration, deployment pipelines
+- **Cloud:** Supabase, Render, Netlify, GitHub
+- **AWS:** boto3 SDK, S3 (deployed), SES integration (code ready)
+- **DevOps:** Git, environment configuration, deployment pipelines, CORS configuration
 - **Security:** Parameterized queries (SQL injection prevention), password-based admin auth
 
 ## License

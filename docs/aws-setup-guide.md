@@ -1,23 +1,22 @@
-# AWS Setup Guide (Optional)
+# AWS Setup Guide
 
-This guide shows how to integrate AWS services (S3 and SES) with your portfolio website.
+This guide documents the AWS services integrated with your portfolio website.
 
-**Note:** The current deployment uses **Supabase** (database), **Render** (backend), and **Vercel** (frontend) — all on free tiers with zero AWS dependency. This guide is for those who want to activate the AWS integration code that's already written in the codebase.
-
-## Current Architecture (No AWS Required)
+## Current Architecture
 
 ✅ **Database:** Supabase (free PostgreSQL)
 ✅ **Backend:** Render (free Flask hosting)
-✅ **Frontend:** Vercel (free React hosting)
+✅ **Frontend:** Netlify (free React hosting)
+✅ **Storage:** AWS S3 (us-east-2) — ~$0.50/month
 
-## AWS Services (Optional Add-ons)
+## AWS Services
 
 This codebase includes production-ready integration code for:
 
-- **S3** — Store project images in AWS instead of local storage
-- **SES** — Send real emails instead of logging to console
+- **S3** — ✅ **ACTIVE** — Project images stored in S3 (us-east-2)
+- **SES** — Optional — Send real emails instead of logging to console
 
-Both features work via environment variable toggles, so you can activate them without changing any code.
+S3 is currently deployed and working. SES code is ready but not activated (using `USE_LOCAL_EMAIL=true`).
 
 ---
 
@@ -28,73 +27,26 @@ Both features work via environment variable toggles, so you can activate them wi
 
 ---
 
-## 1. S3 — Image Storage (Optional)
-
-**What it does:** S3 stores and serves files (images, documents, etc.) in the cloud with high durability and availability.
-
-**Current setup:** Images are saved to local storage on the Render server (`USE_LOCAL_STORAGE=true`)
-
-**Why use S3:** Persistent storage that survives server restarts, CDN-friendly URLs, better for production
-
-### Setup Steps
-
-1. Go to **AWS Console > RDS > Create Database**
-2. Choose **Standard Create**
-3. Select **PostgreSQL** as the engine
-4. Choose **Free Tier** template (db.t3.micro)
-5. Configure:
-   - **DB instance identifier:** `portfolio-db`
-   - **Master username:** `postgres`
-   - **Master password:** Choose a strong password
-6. Under **Connectivity:**
-   - Select your default VPC
-   - Set **Public access** to **Yes** (for development — restrict in production)
-   - Create a new security group or use an existing one
-7. Under **Additional configuration:**
-   - **Initial database name:** `portfolio`
-8. Click **Create database** and wait for it to become available
-9. Note the **Endpoint** from the database details page — this is your `DB_HOST`
-10. Update your security group's inbound rules to allow traffic on port **5432** from your IP
-
-### Connect and Initialize
-
-```bash
-# Connect to your RDS instance
-psql -h YOUR-RDS-ENDPOINT.rds.amazonaws.com -U postgres -d portfolio
-
-# Run the schema and seed files
-psql -h YOUR-RDS-ENDPOINT -U postgres -d portfolio -f database/schema.sql
-psql -h YOUR-RDS-ENDPOINT -U postgres -d portfolio -f database/seed.sql
-```
-
-### Update .env
-
-```
-DB_HOST=your-rds-endpoint.xxxx.us-east-1.rds.amazonaws.com
-DB_PORT=5432
-DB_NAME=portfolio
-DB_USER=postgres
-DB_PASSWORD=your-rds-password
-```
-
----
-
-## 2. S3 — Image Storage
+## 1. S3 — Image Storage ✅ ACTIVE
 
 **What it does:** S3 (Simple Storage Service) stores files (images, documents, etc.) in the cloud with high durability and availability. Files are accessible via URLs.
 
+**Current setup:** ✅ Active with bucket `portfolio-images-lukesheely` in `us-east-2`
+
 **Why it's used here:** We store project screenshots uploaded through the admin page. S3 serves them directly to visitors via public URLs.
 
-### Setup Steps
+### Current Configuration
 
-1. Go to **AWS Console > S3 > Create Bucket**
-2. **Bucket name:** `portfolio-images-yourname` (must be globally unique)
-3. **Region:** Same as your other services (e.g., us-east-1)
-4. Uncheck **Block all public access** (we need images to be publicly readable)
-   - Check the acknowledgment box
-5. Click **Create bucket**
-6. Go to your bucket > **Permissions** > **Bucket Policy**
-7. Add this policy (replace `YOUR-BUCKET-NAME`):
+**Bucket:** `portfolio-images-lukesheely`
+**Region:** `us-east-2`
+**Access:** Public read access with CORS configured
+**Cost:** ~$0.50/month for storage
+
+### Setup Steps (Already Completed)
+
+1. Created S3 bucket in us-east-2
+2. Disabled "Block all public access"
+3. Added bucket policy for public GetObject:
 
 ```json
 {
@@ -104,47 +56,55 @@ DB_PASSWORD=your-rds-password
       "Effect": "Allow",
       "Principal": "*",
       "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::YOUR-BUCKET-NAME/*"
+      "Resource": "arn:aws:s3:::portfolio-images-lukesheely/*"
     }
   ]
 }
 ```
 
-8. (Optional) Go to **Properties** > **Static website hosting** and enable it
-
-### Update .env
-
-```
-S3_BUCKET=portfolio-images-yourname
-USE_LOCAL_STORAGE=false
-```
-
-### IAM Permissions
-
-Your backend needs permission to upload to S3. If running on EC2, attach an IAM role with this policy:
+4. Configured CORS to allow frontend access:
 
 ```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
+[
     {
-      "Effect": "Allow",
-      "Action": ["s3:PutObject", "s3:DeleteObject"],
-      "Resource": "arn:aws:s3:::YOUR-BUCKET-NAME/*"
+        "AllowedHeaders": ["*"],
+        "AllowedMethods": ["GET", "HEAD"],
+        "AllowedOrigins": [
+            "https://lukesheely.netlify.app",
+            "http://localhost:5173"
+        ],
+        "ExposeHeaders": [],
+        "MaxAgeSeconds": 3000
     }
-  ]
-}
+]
 ```
 
-If running locally, configure AWS credentials with `aws configure`.
+5. Created IAM user `portfolio-app` with S3 access
+6. Generated access keys and added to Render environment variables
+
+### Environment Variables (Production)
+
+```
+AWS_REGION=us-east-2
+S3_BUCKET=portfolio-images-lukesheely
+USE_LOCAL_STORAGE=false
+AWS_ACCESS_KEY_ID=<your-access-key>
+AWS_SECRET_ACCESS_KEY=<your-secret-key>
+```
+
+### For Local Development
+
+Set `USE_LOCAL_STORAGE=true` in your `.env` file to save images locally without needing AWS credentials.
 
 ---
 
-## 3. SES — Email Notifications
+## 2. SES — Email Notifications (Optional)
 
 **What it does:** SES (Simple Email Service) sends emails programmatically. We use it to send yourself an email whenever someone submits the contact form.
 
-**Why it's used here:** Instead of checking the database for new contact messages, SES sends you an instant email notification. It's a lightweight, serverless email solution.
+**Current setup:** Not active — using `USE_LOCAL_EMAIL=true` (logs to console)
+
+**Why activate it:** Instead of checking the database for new contact messages, SES sends you an instant email notification. It's a lightweight, serverless email solution.
 
 ### Setup Steps
 
@@ -184,20 +144,22 @@ Your backend needs this policy to send emails:
 
 ---
 
-## 4. IAM — Permissions (Overview)
+## 3. IAM — Permissions (Current Setup)
 
 **What it does:** IAM (Identity and Access Management) controls who can access which AWS services. Proper IAM setup ensures your application only has the permissions it needs.
 
-**Best practices for this project:**
+**Current setup:** IAM user `portfolio-app` with AmazonS3FullAccess policy
 
-1. **Don't use your root account** — Create an IAM user for development
-2. **Least privilege** — Only grant the permissions each service needs:
-   - Backend needs: `rds-db:connect`, `s3:PutObject`, `ses:SendEmail`
-   - Nothing else
-3. **Use IAM roles for EC2** — If deploying to EC2, attach an IAM role instead of hardcoding credentials
-4. **Rotate credentials** — Regularly rotate access keys
+**Best practices implemented:**
 
-### Recommended IAM Policy for the Backend
+1. ✅ Created dedicated IAM user (not using root account)
+2. ✅ Granted S3 access only
+3. ✅ Access keys stored as environment variables on Render
+4. ⚠️ Using AmazonS3FullAccess (could be more restrictive)
+
+### Current IAM Policy
+
+Currently using AWS managed policy `AmazonS3FullAccess`. For better security, consider this custom policy:
 
 ```json
 {
@@ -206,8 +168,8 @@ Your backend needs this policy to send emails:
     {
       "Sid": "S3Upload",
       "Effect": "Allow",
-      "Action": ["s3:PutObject", "s3:DeleteObject"],
-      "Resource": "arn:aws:s3:::YOUR-BUCKET-NAME/*"
+      "Action": ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::portfolio-images-lukesheely/*"
     },
     {
       "Sid": "SESEmail",
@@ -219,14 +181,23 @@ Your backend needs this policy to send emails:
 }
 ```
 
+This policy restricts access to only the specific bucket needed.
+
 ---
 
-## Cost Estimates (Free Tier)
+## Cost Breakdown
 
-| Service | Free Tier | Monthly Cost After |
-|---------|-----------|-------------------|
-| RDS (db.t3.micro) | 750 hours/month for 12 months | ~$15/month |
-| S3 | 5 GB storage, 20K GET requests | Pennies |
-| SES | 62K emails/month (from EC2) | $0.10 per 1K emails |
+| Service | Usage | Monthly Cost |
+|---------|-------|--------------|
+| S3 Storage | ~100MB images | ~$0.02 |
+| S3 Requests | ~1000 GET/month | ~$0.01 |
+| S3 Data Transfer | First 100GB/month free | $0.00 |
+| SES (if activated) | 62K emails/month (from EC2) | $0.10 per 1K emails |
 
-For a portfolio project, you'll stay well within the free tier.
+**Total:** ~$0.50/month (mostly S3 storage)
+
+### Free Tier Details
+
+- **S3:** First 5GB storage free for 12 months, then $0.023/GB
+- **S3 Requests:** 20K GET requests free per month
+- **SES:** 62K emails/month free when sending from AWS services
