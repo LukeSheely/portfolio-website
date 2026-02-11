@@ -4,15 +4,15 @@ A full-stack portfolio website built with **React**, **Flask**, and **PostgreSQL
 
 ## Live Demo
 
-🌐 **[View Live Site](#)** *(add your Vercel URL here)*
-🔧 **Backend API:** *(add your Render URL here)*
+🌐 **[View Live Site](https://courageous-dieffenbachia-6ef8eb.netlify.app/)**
+🔧 **Backend API:** https://portfolio-backend-zkb1.onrender.com
 
 ## Architecture
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌──────────────┐
 │   React UI  │────▶│  Flask API   │────▶│  PostgreSQL  │
-│  (Vercel)   │     │  (Render)    │     │  (Supabase)  │
+│  (Netlify)  │     │  (Render)    │     │  (Supabase)  │
 └─────────────┘     └──────────────┘     └──────────────┘
 ```
 
@@ -20,7 +20,7 @@ A full-stack portfolio website built with **React**, **Flask**, and **PostgreSQL
 
 | Layer | Technology | Hosting |
 |-------|-----------|---------|
-| Frontend | React 18 + React Router + Vite | Vercel (free tier) |
+| Frontend | React 18 + React Router + Vite | Netlify (free tier) |
 | Backend | Python 3 + Flask + CORS | Render (free tier) |
 | Database | PostgreSQL 17 (raw SQL via psycopg2) | Supabase (free tier) |
 | Deployment | GitHub Actions + Git | GitHub |
@@ -134,7 +134,7 @@ This project is deployed using free-tier cloud services:
 - Auto-deploys from GitHub `main` branch
 - Environment variables configured in Render dashboard
 
-### Frontend: Vercel
+### Frontend: Netlify
 - Free static hosting with global CDN
 - Auto-deploys from GitHub on push
 - Environment variable: `VITE_API_URL` points to Render backend
