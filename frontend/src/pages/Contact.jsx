@@ -81,9 +81,8 @@ function Contact() {
 
       <div style={{ marginTop: 32, color: "var(--color-text-muted)", fontSize: "0.85rem" }}>
         <p>
-          <strong>AWS Integration:</strong> This form saves your message to a
-          PostgreSQL database (hosted on RDS) and sends an email notification
-          via AWS SES.
+          <strong>Tech Stack:</strong> This form saves your message to a
+          PostgreSQL database (hosted on Supabase) with AWS S3 for image storage.
         </p>
       </div>
     </div>
