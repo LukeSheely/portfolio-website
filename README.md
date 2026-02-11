@@ -1,50 +1,51 @@
 # Portfolio Website
 
-A full-stack portfolio website built with **React**, **Flask**, and **PostgreSQL**, deployed on **AWS**. Designed to demonstrate database design, SQL query skills, and AWS service integration.
+A full-stack portfolio website built with **React**, **Flask**, and **PostgreSQL**. Designed to demonstrate database design, SQL query skills, and cloud deployment best practices.
+
+## Live Demo
+
+🌐 **[View Live Site](#)** *(add your Vercel URL here)*
+🔧 **Backend API:** *(add your Render URL here)*
 
 ## Architecture
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌──────────────┐
 │   React UI  │────▶│  Flask API   │────▶│  PostgreSQL  │
-│  (Vite)     │     │  (Python)    │     │  (AWS RDS)   │
-└─────────────┘     └──────┬───────┘     └──────────────┘
-                           │
-                    ┌──────┴───────┐
-                    │   AWS S3     │  Image uploads
-                    │   AWS SES    │  Email notifications
-                    └──────────────┘
+│  (Vercel)   │     │  (Render)    │     │  (Supabase)  │
+└─────────────┘     └──────────────┘     └──────────────┘
 ```
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 18 + React Router + Vite |
-| Backend | Python / Flask |
-| Database | PostgreSQL (raw SQL via psycopg2) |
-| File Storage | AWS S3 (local fallback for dev) |
-| Email | AWS SES (console logging for dev) |
+| Layer | Technology | Hosting |
+|-------|-----------|---------|
+| Frontend | React 18 + React Router + Vite | Vercel (free tier) |
+| Backend | Python 3 + Flask + CORS | Render (free tier) |
+| Database | PostgreSQL 17 (raw SQL via psycopg2) | Supabase (free tier) |
+| Deployment | GitHub Actions + Git | GitHub |
+
+**AWS Integration:** The codebase includes production-ready S3 and SES integration code (see `backend/services/`) that can be activated by setting environment variables. Currently using local fallbacks to minimize costs during development.
 
 ## Features
 
 - **Home** — Featured projects and tag cloud
 - **Projects** — All projects with expandable detail view showing tags (many-to-many JOIN)
 - **Blog** — Published posts fetched via SQL, individual post pages by slug
-- **Contact** — Form that saves to PostgreSQL and sends email via SES
-- **Admin** — Password-protected dashboard to manage projects, posts, and messages; S3 image upload
+- **Contact** — Form that saves to PostgreSQL and sends email notifications
+- **Admin** — Password-protected dashboard to manage projects, posts, and messages
 
 ## Database Design
 
 Five normalized tables demonstrating relational design patterns:
 
-- `projects` — Portfolio entries with metadata and S3 image URLs
+- `projects` — Portfolio entries with metadata and optional image URLs
 - `posts` — Blog entries with slug-based routing and draft/published status
 - `tags` — Reusable tag labels
 - `project_tags` — Junction table (many-to-many relationship)
 - `contact_messages` — Form submissions
 
-See [`database/schema.sql`](database/schema.sql) for full CREATE statements with constraints and indexes.
+See [`database/schema.sql`](database/schema.sql) for full CREATE statements with constraints, indexes, and foreign keys.
 
 ## SQL Skills Demonstrated
 
@@ -68,22 +69,28 @@ All application code uses **raw SQL** (no ORM) via psycopg2 with parameterized q
 
 - Python 3.9+
 - Node.js 18+
-- PostgreSQL (running locally)
+- PostgreSQL (or use Supabase credentials)
 
 ### 1. Clone and configure
 
 ```bash
+git clone https://github.com/LukeSheely/portfolio-website.git
+cd portfolio-website
 cp .env.example .env
-# Edit .env with your local PostgreSQL credentials
+# Edit .env with your database credentials
 ```
 
 ### 2. Set up the database
 
-```bash
-# Create the database
-createdb portfolio
+**Option A: Use Supabase (recommended)**
+- Create a free account at [supabase.com](https://supabase.com)
+- Create a new project and get your connection details
+- Update `.env` with Supabase credentials
+- Run schema: Use Supabase SQL Editor or connect via psql
 
-# Run schema and seed data
+**Option B: Local PostgreSQL**
+```bash
+createdb portfolio
 psql -d portfolio -f database/schema.sql
 psql -d portfolio -f database/seed.sql
 ```
@@ -105,22 +112,47 @@ python app.py
 cd frontend
 npm install
 npm run dev
-# Frontend runs on http://localhost:3000
+# Frontend runs on http://localhost:5173
 # API requests are proxied to the backend automatically
 ```
 
 ### 5. Open the app
 
-Go to [http://localhost:3000](http://localhost:3000). Log into the admin page with the password from your `.env` file (default: `admin123`).
+Go to [http://localhost:5173](http://localhost:5173). Log into the admin page with the password from your `.env` file (default: `admin123`).
 
-## AWS Deployment
+## Deployment
 
-See [`docs/aws-setup-guide.md`](docs/aws-setup-guide.md) for step-by-step instructions on setting up:
+This project is deployed using free-tier cloud services:
 
-1. **RDS** — Managed PostgreSQL instance
-2. **S3** — Image storage with public read access
-3. **SES** — Contact form email notifications
-4. **IAM** — Least-privilege permissions
+### Database: Supabase
+- Free PostgreSQL database with 500MB storage
+- Connection pooling for better performance
+- Automated backups
+
+### Backend: Render
+- Free web service tier
+- Auto-deploys from GitHub `main` branch
+- Environment variables configured in Render dashboard
+
+### Frontend: Vercel
+- Free static hosting with global CDN
+- Auto-deploys from GitHub on push
+- Environment variable: `VITE_API_URL` points to Render backend
+
+See [`docs/deployment-guide.md`](docs/deployment-guide.md) for detailed deployment instructions.
+
+## AWS Integration (Optional)
+
+The codebase includes AWS service integrations that can be activated:
+
+- **S3** — Image upload/storage (code in `backend/services/s3.py`)
+- **SES** — Email notifications (code in `backend/services/email.py`)
+
+To activate, set up AWS services and update environment variables:
+- `USE_LOCAL_STORAGE=false` + configure S3 bucket
+- `USE_LOCAL_EMAIL=false` + configure SES
+
+See [`docs/aws-setup-guide.md`](docs/aws-setup-guide.md) for AWS setup instructions.
 
 ## Project Structure
 
@@ -133,6 +165,7 @@ See [`docs/aws-setup-guide.md`](docs/aws-setup-guide.md) for step-by-step instru
 │   ├── app.py              # Flask application entry point
 │   ├── config.py           # Environment configuration
 │   ├── db.py               # Database connection (psycopg2)
+│   ├── Procfile            # Render deployment config
 │   ├── routes/
 │   │   ├── projects.py     # Public project endpoints
 │   │   ├── posts.py        # Public blog endpoints
@@ -148,7 +181,22 @@ See [`docs/aws-setup-guide.md`](docs/aws-setup-guide.md) for step-by-step instru
 │   │   └── pages/          # Home, Projects, Blog, Contact, Admin
 │   └── vite.config.js      # Dev server with API proxy
 ├── docs/
-│   └── aws-setup-guide.md  # AWS setup instructions
+│   ├── deployment-guide.md # Deployment instructions
+│   └── aws-setup-guide.md  # Optional AWS setup
 ├── .env.example            # Environment variable template
 └── README.md
 ```
+
+## Technologies & Skills Demonstrated
+
+- **Backend:** Python, Flask, REST API design, CORS
+- **Database:** PostgreSQL, SQL (raw queries, JOINs, aggregates, transactions)
+- **Frontend:** React, React Router, modern JavaScript (ES6+)
+- **Cloud:** Supabase, Render, Vercel, GitHub
+- **AWS:** boto3 SDK, S3, SES integration (code ready, not deployed)
+- **DevOps:** Git, environment configuration, deployment pipelines
+- **Security:** Parameterized queries (SQL injection prevention), password-based admin auth
+
+## License
+
+MIT

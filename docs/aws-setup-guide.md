@@ -1,6 +1,25 @@
-# AWS Setup Guide
+# AWS Setup Guide (Optional)
 
-Step-by-step instructions for setting up the AWS services used in this project.
+This guide shows how to integrate AWS services (S3 and SES) with your portfolio website.
+
+**Note:** The current deployment uses **Supabase** (database), **Render** (backend), and **Vercel** (frontend) — all on free tiers with zero AWS dependency. This guide is for those who want to activate the AWS integration code that's already written in the codebase.
+
+## Current Architecture (No AWS Required)
+
+✅ **Database:** Supabase (free PostgreSQL)
+✅ **Backend:** Render (free Flask hosting)
+✅ **Frontend:** Vercel (free React hosting)
+
+## AWS Services (Optional Add-ons)
+
+This codebase includes production-ready integration code for:
+
+- **S3** — Store project images in AWS instead of local storage
+- **SES** — Send real emails instead of logging to console
+
+Both features work via environment variable toggles, so you can activate them without changing any code.
+
+---
 
 ## Prerequisites
 
@@ -9,11 +28,13 @@ Step-by-step instructions for setting up the AWS services used in this project.
 
 ---
 
-## 1. RDS — PostgreSQL Database
+## 1. S3 — Image Storage (Optional)
 
-**What it does:** RDS (Relational Database Service) hosts and manages your PostgreSQL database in the cloud. It handles backups, patching, and scaling so you don't have to manage a database server yourself.
+**What it does:** S3 stores and serves files (images, documents, etc.) in the cloud with high durability and availability.
 
-**Why it's used here:** We need a relational database to store projects, posts, tags, and contact messages. RDS provides a managed PostgreSQL instance accessible from our backend.
+**Current setup:** Images are saved to local storage on the Render server (`USE_LOCAL_STORAGE=true`)
+
+**Why use S3:** Persistent storage that survives server restarts, CDN-friendly URLs, better for production
 
 ### Setup Steps
 
