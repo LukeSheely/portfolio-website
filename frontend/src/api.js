@@ -5,7 +5,9 @@
  * In production: uses the deployed backend URL from environment variable
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || "/api";
+const API_BASE = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL + "/api"
+  : "/api";
 
 // ---------------------------------------------------------------------------
 // Public endpoints
