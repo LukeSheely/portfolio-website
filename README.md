@@ -5,7 +5,6 @@ A full-stack portfolio website built with **React**, **Flask**, and **PostgreSQL
 ## Live Demo
 
 🌐 **[View Live Site](https://lukesheely.netlify.app/)**
-🔧 **Backend API:** https://portfolio-backend-zkb1.onrender.com
 
 ## Architecture
 
