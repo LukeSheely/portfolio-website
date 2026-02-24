@@ -7,12 +7,18 @@ via AWS SES (or logs it locally in development).
 
 from flask import Blueprint, jsonify, request
 from db import get_db
+from extensions import limiter
 from services.email import send_contact_email
 
 contact_bp = Blueprint("contact", __name__)
 
+_MAX_NAME = 100
+_MAX_EMAIL = 254   # RFC 5321 maximum
+_MAX_MESSAGE = 5000
+
 
 @contact_bp.route("/api/contact", methods=["POST"])
+@limiter.limit("10 per hour")
 def submit_contact():
     """
     POST /api/contact
@@ -32,6 +38,13 @@ def submit_contact():
 
     if not name or not email or not message:
         return jsonify({"error": "Name, email, and message cannot be empty"}), 400
+
+    if len(name) > _MAX_NAME:
+        return jsonify({"error": f"Name must be {_MAX_NAME} characters or fewer"}), 400
+    if len(email) > _MAX_EMAIL:
+        return jsonify({"error": f"Email must be {_MAX_EMAIL} characters or fewer"}), 400
+    if len(message) > _MAX_MESSAGE:
+        return jsonify({"error": f"Message must be {_MAX_MESSAGE} characters or fewer"}), 400
 
     # Store the message in the database
     with get_db() as (conn, cur):

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Global Styles — Clean, minimal portfolio design
+   Global Styles — Portfolio design
    ========================================================================== */
 
 *,
@@ -11,19 +11,22 @@
 }
 
 :root {
-  --color-bg: #fafafa;
+  --color-bg: #f0f4ff;
   --color-surface: #ffffff;
-  --color-text: #1a1a2e;
-  --color-text-muted: #6b7280;
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-border: #e5e7eb;
-  --color-tag-bg: #eff6ff;
-  --color-tag-text: #1e40af;
+  --color-text: #1e1b4b;
+  --color-text-muted: #64748b;
+  --color-primary: #6366f1;
+  --color-primary-hover: #4f46e5;
+  --color-accent: #06b6d4;
+  --color-border: #e0e7ff;
+  --color-tag-bg: #ede9fe;
+  --color-tag-text: #5b21b6;
   --color-success: #059669;
   --color-danger: #dc2626;
+  --color-nav-bg: #0f172a;
   --radius: 8px;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow: 0 1px 4px rgba(99, 102, 241, 0.08);
+  --shadow-hover: 0 8px 24px rgba(99, 102, 241, 0.15);
   --max-width: 900px;
 }
 
@@ -51,12 +54,13 @@ a:hover {
 
 /* Navigation */
 .navbar {
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--color-nav-bg);
+  border-bottom: none;
   padding: 16px 0;
   position: sticky;
   top: 0;
   z-index: 100;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 .navbar .container {
@@ -68,7 +72,10 @@ a:hover {
 .navbar-brand {
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--color-text);
+  background: linear-gradient(90deg, #818cf8, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 .navbar-brand:hover {
   text-decoration: none;
@@ -81,7 +88,7 @@ a:hover {
 }
 
 .navbar-links a {
-  color: var(--color-text-muted);
+  color: #94a3b8;
   font-size: 0.95rem;
   font-weight: 500;
   transition: color 0.2s;
@@ -89,7 +96,7 @@ a:hover {
 
 .navbar-links a:hover,
 .navbar-links a.active {
-  color: var(--color-primary);
+  color: #ffffff;
   text-decoration: none;
 }
 
@@ -102,6 +109,10 @@ a:hover {
   font-size: 2rem;
   font-weight: 700;
   margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .page-subtitle {
@@ -117,12 +128,20 @@ a:hover {
   padding: 24px;
   box-shadow: var(--shadow);
   margin-bottom: 16px;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--color-primary);
 }
 
 .card-title {
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 8px;
+  color: var(--color-text);
 }
 
 .card-meta {
@@ -152,7 +171,7 @@ a:hover {
   background: var(--color-tag-bg);
   color: var(--color-tag-text);
   padding: 4px 10px;
-  border-radius: 4px;
+  border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 500;
   margin: 2px 4px 2px 0;
@@ -174,16 +193,21 @@ a:hover {
   font-weight: 500;
   border: none;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  text-decoration: none;
 }
 
 .btn-primary {
-  background: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   color: white;
 }
 .btn-primary:hover {
-  background: var(--color-primary-hover);
-  text-decoration: none;
+  opacity: 0.92;
 }
 
 .btn-danger {
@@ -192,6 +216,7 @@ a:hover {
 }
 .btn-danger:hover {
   background: #b91c1c;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
 .btn-small {
@@ -220,13 +245,15 @@ a:hover {
   border-radius: var(--radius);
   font-size: 0.95rem;
   font-family: inherit;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: var(--color-surface);
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
   border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
 .form-group textarea {
@@ -242,6 +269,7 @@ a:hover {
 
 .checkbox-group input[type="checkbox"] {
   width: auto;
+  accent-color: var(--color-primary);
 }
 
 /* Alerts */
@@ -284,6 +312,7 @@ a:hover {
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   font-family: inherit;
+  transition: color 0.2s;
 }
 
 .admin-tab.active {
@@ -304,9 +333,9 @@ a:hover {
 .footer {
   text-align: center;
   padding: 32px 0;
-  color: var(--color-text-muted);
+  color: #94a3b8;
   font-size: 0.85rem;
-  border-top: 1px solid var(--color-border);
+  background: var(--color-nav-bg);
   margin-top: 48px;
 }
 

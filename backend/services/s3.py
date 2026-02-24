@@ -38,6 +38,9 @@ import boto3
 from werkzeug.utils import secure_filename
 import config
 
+_ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+_MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+
 
 def upload_file(file):
     """
@@ -48,7 +51,19 @@ def upload_file(file):
 
     Returns:
         The public URL where the file can be accessed
+
+    Raises:
+        ValueError: if the file type or size is not allowed
     """
+    if file.content_type not in _ALLOWED_MIME_TYPES:
+        raise ValueError("File type not allowed. Accepted: JPEG, PNG, GIF, WebP")
+
+    file.stream.seek(0, 2)
+    size = file.stream.tell()
+    file.stream.seek(0)
+    if size > _MAX_FILE_SIZE:
+        raise ValueError("File exceeds the 5 MB maximum size")
+
     # Generate a unique filename to avoid collisions
     ext = os.path.splitext(file.filename)[1]
     filename = f"{uuid.uuid4().hex}{ext}"

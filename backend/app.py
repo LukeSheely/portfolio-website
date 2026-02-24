@@ -13,6 +13,7 @@ import os
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 
+from extensions import limiter
 from routes.projects import projects_bp
 from routes.posts import posts_bp
 from routes.contact import contact_bp
@@ -22,8 +23,10 @@ import config
 app = Flask(__name__)
 app.secret_key = config.SECRET_KEY
 
-# Allow requests from the React dev server (localhost:3000)
-CORS(app)
+# Allow cross-origin requests only from the configured frontend origin
+CORS(app, origins=[config.FRONTEND_URL])
+
+limiter.init_app(app)
 
 # Register route blueprints
 app.register_blueprint(projects_bp)
@@ -48,4 +51,5 @@ def health():
 if __name__ == "__main__":
     # Create local upload directory if it doesn't exist
     os.makedirs(config.LOCAL_UPLOAD_DIR, exist_ok=True)
-    app.run(debug=True, port=5000)
+    debug = os.getenv("FLASK_DEBUG", "false").lower() == "true"
+    app.run(debug=debug, port=5000)

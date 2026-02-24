@@ -1,52 +1,84 @@
 """
 Admin routes — Protected endpoints for managing projects, posts, and messages.
 
-Uses a simple password-based auth check for demo purposes.
-In production, you'd use JWT tokens or session-based auth.
+Uses session tokens for auth: login issues a short-lived random token,
+which the frontend sends as a Bearer token on subsequent requests.
 """
 
+import hmac
+import re
+import secrets
+import time
 from functools import wraps
 from flask import Blueprint, jsonify, request
 from db import get_db
+from extensions import limiter
 from services.s3 import upload_file
 import config
 
 admin_bp = Blueprint("admin", __name__)
 
+# ---------------------------------------------------------------------------
+# Session token store — maps token -> expiry timestamp (monotonic clock)
+# ---------------------------------------------------------------------------
+
+_tokens: dict = {}
+_TOKEN_TTL = 8 * 3600  # 8 hours
+
+
+def _issue_token() -> str:
+    token = secrets.token_hex(32)
+    _tokens[token] = time.monotonic() + _TOKEN_TTL
+    return token
+
+
+def _validate_token(token: str) -> bool:
+    expiry = _tokens.get(token)
+    if expiry is None:
+        return False
+    if time.monotonic() > expiry:
+        del _tokens[token]
+        return False
+    return True
+
 
 # ---------------------------------------------------------------------------
-# Auth middleware — simple password check for demo purposes
+# Auth middleware
 # ---------------------------------------------------------------------------
 
 def require_admin(f):
-    """Check the Authorization header for the admin password."""
+    """Check the Authorization header for a valid session token."""
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.headers.get("Authorization", "")
-        if auth != f"Bearer {config.ADMIN_PASSWORD}":
+        if not auth.startswith("Bearer "):
+            return jsonify({"error": "Unauthorized"}), 401
+        if not _validate_token(auth[7:]):
             return jsonify({"error": "Unauthorized"}), 401
         return f(*args, **kwargs)
     return decorated
 
 
 # ---------------------------------------------------------------------------
-# Login — verify the admin password
+# Login — verify the admin password and issue a session token
 # ---------------------------------------------------------------------------
 
 @admin_bp.route("/api/admin/login", methods=["POST"])
+@limiter.limit("5 per 5 minutes")
 def admin_login():
     """
     POST /api/admin/login
     Body: { "password": "..." }
 
-    Returns a success status if the password matches.
-    The frontend stores the password and sends it with subsequent requests.
+    Returns a short-lived random session token on success.
+    Rate-limited to 5 attempts per 5 minutes to prevent brute-force.
     """
     data = request.get_json()
-    if not data or data.get("password") != config.ADMIN_PASSWORD:
+    password = data.get("password", "") if data else ""
+    if not hmac.compare_digest(password, config.ADMIN_PASSWORD):
         return jsonify({"error": "Invalid password"}), 401
 
-    return jsonify({"message": "Authenticated", "token": config.ADMIN_PASSWORD})
+    return jsonify({"message": "Authenticated", "token": _issue_token()})
 
 
 # ---------------------------------------------------------------------------
@@ -170,6 +202,19 @@ def delete_project(project_id):
 
 
 # ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _slugify(title: str) -> str:
+    """Convert a title to a URL-safe slug."""
+    slug = title.lower()
+    slug = re.sub(r"[^\w\s-]", "", slug)   # strip non-word chars (keep hyphens)
+    slug = re.sub(r"[\s_]+", "-", slug)    # spaces/underscores → hyphens
+    slug = re.sub(r"-+", "-", slug)        # collapse consecutive hyphens
+    return slug.strip("-")
+
+
+# ---------------------------------------------------------------------------
 # Posts CRUD
 # ---------------------------------------------------------------------------
 
@@ -201,7 +246,7 @@ def create_post():
         return jsonify({"error": "Title and content are required"}), 400
 
     # Generate slug from title if not provided
-    slug = data.get("slug") or data["title"].lower().replace(" ", "-")
+    slug = data.get("slug") or _slugify(data["title"])
 
     with get_db() as (conn, cur):
         cur.execute("""

@@ -38,3 +38,6 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 
 # --- Flask ---
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
+
+# --- CORS ---
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
