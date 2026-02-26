@@ -5,6 +5,7 @@ import {
   adminCreateProject,
   adminUpdateProject,
   adminDeleteProject,
+  adminReorderProjects,
   adminFetchPosts,
   adminCreatePost,
   adminUpdatePost,
@@ -95,8 +96,15 @@ function ProjectsAdmin({ token }) {
     title: "", description: "", tech_stack: "",
     live_url: "", github_url: "", image_url: "", featured: false,
   });
+  const [dragOverId, setDragOverId] = useState(null);
+  const dragIdRef = React.useRef(null);
+  const [orderChanged, setOrderChanged] = useState(false);
+  const [expandedSkills, setExpandedSkills] = useState({});
 
-  const load = () => adminFetchProjects(token).then(setProjects);
+  const load = () => adminFetchProjects(token).then((data) => {
+    setProjects(data);
+    setOrderChanged(false);
+  });
   useEffect(() => { load(); }, []);
 
   const resetForm = () => {
@@ -147,6 +155,50 @@ function ProjectsAdmin({ token }) {
     }
   };
 
+  // Drag-and-drop handlers
+  const handleDragStart = (e, id) => {
+    dragIdRef.current = id;
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e, id) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverId(id);
+  };
+
+  const handleDrop = (e, targetId) => {
+    e.preventDefault();
+    const sourceId = dragIdRef.current;
+    if (sourceId === targetId) return;
+
+    setProjects((prev) => {
+      const next = [...prev];
+      const sourceIdx = next.findIndex((p) => p.id === sourceId);
+      const targetIdx = next.findIndex((p) => p.id === targetId);
+      const [moved] = next.splice(sourceIdx, 1);
+      next.splice(targetIdx, 0, moved);
+      return next;
+    });
+    setOrderChanged(true);
+    setDragOverId(null);
+    dragIdRef.current = null;
+  };
+
+  const handleDragEnd = () => {
+    setDragOverId(null);
+    dragIdRef.current = null;
+  };
+
+  const handleSaveOrder = async () => {
+    await adminReorderProjects(token, projects.map((p) => p.id));
+    setOrderChanged(false);
+  };
+
+  const toggleSkills = (id) => {
+    setExpandedSkills((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
   return (
     <div>
       <form onSubmit={handleSubmit} className="card">
@@ -192,17 +244,60 @@ function ProjectsAdmin({ token }) {
         </div>
       </form>
 
-      <h3 style={{ margin: "24px 0 12px" }}>All Projects</h3>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "24px 0 12px" }}>
+        <h3>All Projects</h3>
+        {orderChanged && (
+          <button className="btn btn-small btn-primary" onClick={handleSaveOrder}>
+            Save Order
+          </button>
+        )}
+      </div>
+      <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", marginBottom: 12 }}>
+        Drag projects to reorder them on the page.
+      </p>
+
       {projects.map((p) => (
-        <div className="card" key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
-          <div>
-            <strong>{p.title}</strong>
-            {p.featured && <span className="tag" style={{ marginLeft: 8 }}>Featured</span>}
-            <p className="card-meta">{p.tech_stack}</p>
+        <div
+          key={p.id}
+          className="card"
+          draggable
+          onDragStart={(e) => handleDragStart(e, p.id)}
+          onDragOver={(e) => handleDragOver(e, p.id)}
+          onDrop={(e) => handleDrop(e, p.id)}
+          onDragEnd={handleDragEnd}
+          style={{
+            cursor: "grab",
+            outline: dragOverId === p.id ? "2px solid var(--color-accent)" : "none",
+            transition: "outline 0.1s",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+            <div style={{ display: "flex", alignItems: "start", gap: 10 }}>
+              <span style={{ fontSize: "1.1rem", color: "var(--color-text-muted)", userSelect: "none", marginTop: 2 }}>
+                &#9776;
+              </span>
+              <div>
+                <strong>{p.title}</strong>
+                {p.featured && <span className="tag" style={{ marginLeft: 8 }}>Featured</span>}
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="btn btn-small btn-primary" onClick={(e) => { e.stopPropagation(); handleEdit(p); }}>Edit</button>
+              <button className="btn btn-small btn-danger" onClick={(e) => { e.stopPropagation(); handleDelete(p.id); }}>Delete</button>
+            </div>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button className="btn btn-small btn-primary" onClick={() => handleEdit(p)}>Edit</button>
-            <button className="btn btn-small btn-danger" onClick={() => handleDelete(p.id)}>Delete</button>
+
+          <div style={{ marginTop: 8, borderTop: "1px solid var(--color-border)", paddingTop: 8 }}>
+            <button
+              className="btn btn-small"
+              style={{ fontSize: "0.8rem" }}
+              onClick={(e) => { e.stopPropagation(); toggleSkills(p.id); }}
+            >
+              {expandedSkills[p.id] ? "Hide" : "Show"} Skills & Technologies
+            </button>
+            {expandedSkills[p.id] && (
+              <p className="card-meta" style={{ marginTop: 8 }}>{p.tech_stack || "—"}</p>
+            )}
           </div>
         </div>
       ))}

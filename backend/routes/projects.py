@@ -29,14 +29,14 @@ def get_projects():
                        live_url, github_url, image_url, featured, created_at
                 FROM projects
                 WHERE featured = TRUE
-                ORDER BY created_at DESC
+                ORDER BY sort_order ASC
             """)
         else:
             cur.execute("""
                 SELECT id, title, description, tech_stack,
                        live_url, github_url, image_url, featured, created_at
                 FROM projects
-                ORDER BY created_at DESC
+                ORDER BY sort_order ASC
             """)
 
         projects = cur.fetchall()

@@ -19,14 +19,15 @@ CREATE TABLE projects (
     github_url  VARCHAR(500),                  -- URL to the GitHub repo (nullable)
     image_url   VARCHAR(500),                  -- S3 URL for project screenshot (nullable)
     featured    BOOLEAN       NOT NULL DEFAULT FALSE,
+    sort_order  INTEGER       NOT NULL DEFAULT 0,           -- Controls display order (lower = first)
     created_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Index: speeds up filtering by featured status (used on the homepage)
 CREATE INDEX idx_projects_featured ON projects (featured);
 
--- Index: speeds up ordering by creation date
-CREATE INDEX idx_projects_created_at ON projects (created_at);
+-- Index: speeds up ordering by display order
+CREATE INDEX idx_projects_sort_order ON projects (sort_order);
 
 
 -- ============================================================================

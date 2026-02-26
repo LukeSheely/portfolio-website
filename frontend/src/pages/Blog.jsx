@@ -20,10 +20,6 @@ function Blog() {
   return (
     <div className="page">
       <h1 className="page-title">Blog</h1>
-      <p className="page-subtitle">
-        Thoughts on development, databases, and cloud infrastructure.
-      </p>
-
       {posts.map((post) => (
         <Link
           to={`/blog/${post.slug}`}

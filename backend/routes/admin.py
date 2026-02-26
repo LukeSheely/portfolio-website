@@ -92,9 +92,9 @@ def list_projects():
     with get_db() as (conn, cur):
         cur.execute("""
             SELECT id, title, description, tech_stack,
-                   live_url, github_url, image_url, featured, created_at
+                   live_url, github_url, image_url, featured, sort_order, created_at
             FROM projects
-            ORDER BY created_at DESC
+            ORDER BY sort_order ASC
         """)
         projects = cur.fetchall()
     return jsonify(projects)
@@ -116,9 +116,12 @@ def create_project():
     with get_db() as (conn, cur):
         # -- Demonstrates: INSERT with RETURNING
         # -- Purpose: Create a new portfolio project
+        cur.execute("SELECT COALESCE(MAX(sort_order), 0) + 1 AS next_order FROM projects")
+        next_order = cur.fetchone()["next_order"]
+
         cur.execute("""
-            INSERT INTO projects (title, description, tech_stack, live_url, github_url, image_url, featured)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO projects (title, description, tech_stack, live_url, github_url, image_url, featured, sort_order)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id, title, created_at
         """, (
             data["title"],
@@ -128,6 +131,7 @@ def create_project():
             data.get("github_url"),
             data.get("image_url"),
             data.get("featured", False),
+            next_order,
         ))
         project = cur.fetchone()
 
@@ -199,6 +203,30 @@ def delete_project(project_id):
         return jsonify({"error": "Project not found"}), 404
 
     return jsonify({"message": "Project deleted"})
+
+
+@admin_bp.route("/api/admin/projects/reorder", methods=["PUT"])
+@require_admin
+def reorder_projects():
+    """
+    PUT /api/admin/projects/reorder
+    Body: { "order": [id1, id2, id3, ...] }
+
+    Updates sort_order for all projects based on the provided array index.
+    """
+    data = request.get_json()
+    ordered_ids = data.get("order", []) if data else []
+    if not ordered_ids:
+        return jsonify({"error": "No order provided"}), 400
+
+    with get_db() as (conn, cur):
+        for position, project_id in enumerate(ordered_ids, start=1):
+            cur.execute(
+                "UPDATE projects SET sort_order = %s WHERE id = %s",
+                (position, project_id),
+            )
+
+    return jsonify({"message": "Order updated"})
 
 
 # ---------------------------------------------------------------------------

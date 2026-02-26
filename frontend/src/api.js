@@ -104,6 +104,15 @@ export async function adminDeleteProject(token, id) {
   return res.json();
 }
 
+export async function adminReorderProjects(token, orderedIds) {
+  const res = await fetch(`${API_BASE}/admin/projects/reorder`, {
+    method: "PUT",
+    headers: adminHeaders(token),
+    body: JSON.stringify({ order: orderedIds }),
+  });
+  return res.json();
+}
+
 export async function adminFetchPosts(token) {
   const res = await fetch(`${API_BASE}/admin/posts`, {
     headers: adminHeaders(token),
