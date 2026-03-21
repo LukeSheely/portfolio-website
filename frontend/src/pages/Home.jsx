@@ -17,7 +17,7 @@ function Home() {
         <img
           src="/headshot.png"
           alt="Luke Sheely"
-          style={{ width: 140, height: 140, objectFit: "contain", flexShrink: 0 }}
+          style={{ width: 200, height: 200, objectFit: "contain", flexShrink: 0 }}
         />
         <div>
           <h1 className="page-title">Hi, I'm Luke Sheely</h1>
