@@ -13,20 +13,15 @@ function Home() {
 
   return (
     <div className="page">
-      <section style={{ marginBottom: 48, display: "flex", alignItems: "center", gap: 40 }}>
-        <div style={{
-          flexShrink: 0,
-          padding: 12,
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-          borderRadius: 12,
-          boxShadow: "var(--shadow-hover)",
-        }}>
-          <img
-            src="/headshot.png"
-            alt="Luke Sheely"
-            style={{ width: 200, height: 200, objectFit: "contain", display: "block" }}
-          />
+      <section style={{ marginBottom: 56, display: "flex", alignItems: "center", gap: 48 }}>
+        <div style={{ flexShrink: 0, background: "linear-gradient(135deg, #818cf8, #22d3ee)", padding: 3, borderRadius: 16 }}>
+          <div style={{ background: "var(--color-bg)", borderRadius: 13, overflow: "hidden" }}>
+            <img
+              src="/headshot.png"
+              alt="Luke Sheely"
+              style={{ width: 220, height: 220, objectFit: "contain", display: "block" }}
+            />
+          </div>
         </div>
         <div>
           <h1 className="page-title">Hi, I'm Luke Sheely</h1>
