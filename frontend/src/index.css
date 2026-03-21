@@ -11,22 +11,22 @@
 }
 
 :root {
-  --color-bg: #f0f4ff;
-  --color-surface: #ffffff;
-  --color-text: #1e1b4b;
-  --color-text-muted: #64748b;
-  --color-primary: #6366f1;
-  --color-primary-hover: #4f46e5;
-  --color-accent: #06b6d4;
-  --color-border: #e0e7ff;
-  --color-tag-bg: #ede9fe;
-  --color-tag-text: #5b21b6;
-  --color-success: #059669;
-  --color-danger: #dc2626;
-  --color-nav-bg: #0f172a;
+  --color-bg: #111111;
+  --color-surface: #1c1c1c;
+  --color-text: #e8e8e8;
+  --color-text-muted: #888888;
+  --color-primary: #818cf8;
+  --color-primary-hover: #a5b4fc;
+  --color-accent: #22d3ee;
+  --color-border: #2a2a2a;
+  --color-tag-bg: #1e1e2e;
+  --color-tag-text: #a5b4fc;
+  --color-success: #34d399;
+  --color-danger: #f87171;
+  --color-nav-bg: #0a0a0a;
   --radius: 8px;
-  --shadow: 0 1px 4px rgba(99, 102, 241, 0.08);
-  --shadow-hover: 0 8px 24px rgba(99, 102, 241, 0.15);
+  --shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.5);
   --max-width: 900px;
 }
 
@@ -72,7 +72,7 @@ a:hover {
 .navbar-brand {
   font-size: 1.2rem;
   font-weight: 700;
-  background: linear-gradient(90deg, #818cf8, #06b6d4);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -88,7 +88,7 @@ a:hover {
 }
 
 .navbar-links a {
-  color: #94a3b8;
+  color: #666666;
   font-size: 0.95rem;
   font-weight: 500;
   transition: color 0.2s;
@@ -247,6 +247,7 @@ a:hover {
   font-family: inherit;
   transition: border-color 0.2s, box-shadow 0.2s;
   background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .form-group input:focus,
@@ -281,15 +282,15 @@ a:hover {
 }
 
 .alert-success {
-  background: #ecfdf5;
+  background: #0d2b1f;
   color: var(--color-success);
-  border: 1px solid #a7f3d0;
+  border: 1px solid #065f46;
 }
 
 .alert-error {
-  background: #fef2f2;
+  background: #2b0d0d;
   color: var(--color-danger);
-  border: 1px solid #fecaca;
+  border: 1px solid #7f1d1d;
 }
 
 /* Admin layout */
@@ -333,7 +334,7 @@ a:hover {
 .footer {
   text-align: center;
   padding: 32px 0;
-  color: #94a3b8;
+  color: #444444;
   font-size: 0.85rem;
   background: var(--color-nav-bg);
   margin-top: 48px;
