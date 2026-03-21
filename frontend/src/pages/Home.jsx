@@ -13,21 +13,28 @@ function Home() {
 
   return (
     <div className="page">
-      <section style={{ marginBottom: 48 }}>
-        <h1 className="page-title">Hi, I'm Luke Sheely</h1>
-        <p className="page-subtitle" style={{ maxWidth: 600 }}>
-          Currently a 3rd year Computer Science student at Western Washington University,
-          I hope to get into the field of Machine Learning integrated technology, incorporating
-          my development skills along with AWS and SQL experience. This portfolio website, being
-          the project demonstrating my skills in database design, SQL, and AWS service integration.
-        </p>
-        <div style={{ display: "flex", gap: 12 }}>
-          <Link to="/projects" className="btn btn-primary">
-            View Projects
-          </Link>
-          <Link to="/contact" className="btn btn-primary" style={{ background: "transparent", color: "var(--color-primary)", border: "1px solid var(--color-primary)" }}>
-            Get in Touch
-          </Link>
+      <section style={{ marginBottom: 48, display: "flex", alignItems: "center", gap: 40 }}>
+        <img
+          src="/headshot.png"
+          alt="Luke Sheely"
+          style={{ width: 140, height: 140, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+        />
+        <div>
+          <h1 className="page-title">Hi, I'm Luke Sheely</h1>
+          <p className="page-subtitle" style={{ maxWidth: 520 }}>
+            Currently a 3rd year Computer Science student at Western Washington University,
+            I hope to get into the field of Machine Learning integrated technology, incorporating
+            my development skills along with AWS and SQL experience. This portfolio website, being
+            the project demonstrating my skills in database design, SQL, and AWS service integration.
+          </p>
+          <div style={{ display: "flex", gap: 12 }}>
+            <Link to="/projects" className="btn btn-primary">
+              View Projects
+            </Link>
+            <Link to="/contact" className="btn btn-primary" style={{ background: "transparent", color: "var(--color-primary)", border: "1px solid var(--color-primary)" }}>
+              Get in Touch
+            </Link>
+          </div>
         </div>
       </section>
 

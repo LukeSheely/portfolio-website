@@ -352,4 +352,8 @@ a:hover {
   .page-title {
     font-size: 1.5rem;
   }
+  .hero-section {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
 }
