@@ -19,7 +19,7 @@ function Home() {
             <img
               src="/headshot.png"
               alt="Luke Sheely"
-              style={{ width: 170, height: 302, objectFit: "contain", display: "block" }}
+              style={{ width: 170, display: "block" }}
             />
           </div>
         </div>
