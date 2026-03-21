@@ -14,11 +14,20 @@ function Home() {
   return (
     <div className="page">
       <section style={{ marginBottom: 48, display: "flex", alignItems: "center", gap: 40 }}>
-        <img
-          src="/headshot.png"
-          alt="Luke Sheely"
-          style={{ width: 200, height: 200, objectFit: "contain", flexShrink: 0 }}
-        />
+        <div style={{
+          flexShrink: 0,
+          padding: 12,
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: 12,
+          boxShadow: "var(--shadow-hover)",
+        }}>
+          <img
+            src="/headshot.png"
+            alt="Luke Sheely"
+            style={{ width: 200, height: 200, objectFit: "contain", display: "block" }}
+          />
+        </div>
         <div>
           <h1 className="page-title">Hi, I'm Luke Sheely</h1>
           <p className="page-subtitle" style={{ maxWidth: 520 }}>
