@@ -2,13 +2,33 @@ import React, { useRef } from "react";
 import useAnimatedCanvas from "./useAnimatedCanvas";
 
 /**
- * A title-screen-flavored cosmic scene: a large luminous sphere (a
- * Traveler-style orb) hanging over a drifting starfield and nebula, with a
- * warm city glow on the horizon and soft god-rays. Fan-made and entirely
- * original artwork — it channels the "big sphere over a starry sky" mood,
- * it does not reproduce any specific copyrighted title-screen frame, logo,
- * or UI.
+ * A "star map / director"-flavored scene: glowing destination nodes
+ * scattered across a starfield with faint orbital arcs, a planet arcing
+ * along the bottom, and a selection reticle that drifts between nodes.
+ * Fan-made and entirely original artwork — it channels the navigation-map
+ * mood, it does not reproduce any game's UI, node layout, icons, or logos.
  */
+
+const COLORS = {
+  teal: [90, 210, 200],
+  gold: [230, 182, 96],
+  blue: [96, 156, 232],
+  violet: [156, 116, 224],
+  white: [214, 226, 255],
+  orange: [232, 146, 84],
+};
+
+// Balanced layout of destination nodes (fractions of W / H).
+const NODE_LAYOUT = [
+  { x: 0.18, y: 0.26, r: 20, c: "teal", sats: 2 },
+  { x: 0.5, y: 0.17, r: 26, c: "gold", sats: 1 },
+  { x: 0.82, y: 0.24, r: 18, c: "blue", sats: 0 },
+  { x: 0.33, y: 0.46, r: 15, c: "white", sats: 0 },
+  { x: 0.67, y: 0.44, r: 22, c: "violet", sats: 2 },
+  { x: 0.5, y: 0.62, r: 17, c: "orange", sats: 1 },
+  { x: 0.12, y: 0.6, r: 14, c: "blue", sats: 0 },
+  { x: 0.88, y: 0.58, r: 16, c: "teal", sats: 1 },
+];
 
 function Destiny2Background() {
   const ref = useRef(null);
@@ -17,191 +37,198 @@ function Destiny2Background() {
     setup: (ctx, { W, H, state }) => {
       state.last = 0;
 
-      const starCount = W < 700 ? 90 : 180;
+      const starCount = W < 700 ? 90 : 170;
       state.stars = Array.from({ length: starCount }, () => ({
         x: Math.random() * W,
-        y: Math.random() * H * 0.85,
-        r: Math.random() < 0.85 ? 0.6 + Math.random() * 0.9 : 1.4 + Math.random() * 1.2,
-        base: 0.3 + Math.random() * 0.7,
-        tw: 0.5 + Math.random() * 2.5,
+        y: Math.random() * H,
+        r: Math.random() < 0.85 ? 0.5 + Math.random() * 0.8 : 1.3 + Math.random(),
+        base: 0.3 + Math.random() * 0.6,
+        tw: 0.5 + Math.random() * 2.4,
         phase: Math.random() * Math.PI * 2,
-        drift: 1 + Math.random() * 3,
+        drift: 1 + Math.random() * 2.5,
       }));
 
-      state.nebula = [
-        { x: W * 0.25, y: H * 0.3, r: W * 0.4, c: [60, 110, 190], vx: 4, vy: 2 },
-        { x: W * 0.75, y: H * 0.22, r: W * 0.34, c: [120, 80, 190], vx: -3, vy: 3 },
-        { x: W * 0.6, y: H * 0.55, r: W * 0.42, c: [210, 150, 80], vx: 2, vy: -2 },
-      ];
+      state.nodes = NODE_LAYOUT.map((n, i) => ({
+        x: n.x * W,
+        y: n.y * H,
+        r: n.r * (W < 700 ? 0.8 : 1),
+        col: COLORS[n.c],
+        phase: Math.random() * Math.PI * 2,
+        sats: Array.from({ length: n.sats }, (_, s) => ({
+          dist: n.r * (W < 700 ? 0.8 : 1) + 8 + s * 7,
+          ang: Math.random() * Math.PI * 2,
+          speed: 0.5 + Math.random() * 0.8,
+          size: 1.5 + Math.random(),
+        })),
+        idx: i,
+      }));
 
-      // Traveler-style orb: fixed craters give it a pocked surface.
-      state.orb = { x: W * 0.5, y: H * 0.4, R: Math.min(W, H) * 0.2 };
-      state.craters = Array.from({ length: 16 }, () => {
-        const a = Math.random() * Math.PI * 2;
-        const d = Math.random() * 0.82;
-        return { a, d, r: 0.06 + Math.random() * 0.16, dark: Math.random() < 0.6 };
-      });
+      // planet arcing across the bottom
+      state.planet = { x: W * 0.5, y: H * 1.22, R: Math.max(W, H) * 0.8 };
+      // selection cursor eases between nodes
+      state.cur = { x: state.nodes[0].x, y: state.nodes[0].y };
     },
     frame: (ctx, { t, W, H, state }) => {
       const dt = Math.min(0.05, t - (state.last || t));
       state.last = t;
 
-      // deep-space vertical gradient, warming toward the horizon
+      // deep-space gradient
       const sky = ctx.createLinearGradient(0, 0, 0, H);
       sky.addColorStop(0, "#05060f");
-      sky.addColorStop(0.45, "#0a1226");
-      sky.addColorStop(0.8, "#14172e");
-      sky.addColorStop(1, "#3a2418");
+      sky.addColorStop(0.55, "#0a1024");
+      sky.addColorStop(1, "#0c1630");
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, W, H);
 
+      const p = state.planet;
+
       ctx.globalCompositeOperation = "lighter";
 
-      // nebula clouds, slowly drifting
-      state.nebula.forEach((n) => {
-        n.x += n.vx * dt;
-        n.y += n.vy * dt;
-        if (n.x < -n.r) n.x = W + n.r;
-        if (n.x > W + n.r) n.x = -n.r;
-        const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
-        g.addColorStop(0, `rgba(${n.c[0]}, ${n.c[1]}, ${n.c[2]}, 0.16)`);
-        g.addColorStop(1, `rgba(${n.c[0]}, ${n.c[1]}, ${n.c[2]}, 0)`);
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-        ctx.fill();
-      });
+      // faint nebula wash
+      const neb = ctx.createRadialGradient(W * 0.7, H * 0.3, 0, W * 0.7, H * 0.3, W * 0.5);
+      neb.addColorStop(0, "rgba(70, 90, 170, 0.10)");
+      neb.addColorStop(1, "rgba(70, 90, 170, 0)");
+      ctx.fillStyle = neb;
+      ctx.fillRect(0, 0, W, H);
 
-      // starfield with a slow drift + twinkle
+      // starfield
       state.stars.forEach((s) => {
         s.x -= s.drift * dt;
         if (s.x < 0) s.x = W;
         const tw = s.base * (0.55 + 0.45 * Math.sin(t * s.tw + s.phase));
-        ctx.fillStyle = `rgba(233, 240, 255, ${tw})`;
+        ctx.fillStyle = `rgba(226, 234, 255, ${tw})`;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
         ctx.fill();
       });
 
-      const orb = state.orb;
-      const pulse = 0.5 + 0.5 * Math.sin(t * 0.6);
-
-      // god-rays fanning down from the orb
-      const rays = 7;
-      for (let i = 0; i < rays; i++) {
-        const ang = Math.PI * 0.5 + (i - (rays - 1) / 2) * 0.16 + Math.sin(t * 0.2 + i) * 0.01;
-        const len = H;
-        const spread = 0.03;
-        const x1 = orb.x + Math.cos(ang - spread) * len;
-        const y1 = orb.y + Math.sin(ang - spread) * len;
-        const x2 = orb.x + Math.cos(ang + spread) * len;
-        const y2 = orb.y + Math.sin(ang + spread) * len;
-        const g = ctx.createRadialGradient(orb.x, orb.y, orb.R, orb.x, orb.y, len);
-        g.addColorStop(0, `rgba(200, 220, 255, ${0.05 + 0.02 * pulse})`);
-        g.addColorStop(1, "rgba(200, 220, 255, 0)");
-        ctx.fillStyle = g;
+      // large orbital arcs centered on the planet, passing through the node band
+      ctx.lineWidth = 1;
+      [0.62, 0.78, 0.95].forEach((f, i) => {
+        ctx.strokeStyle = `rgba(120, 160, 220, ${0.12 - i * 0.02})`;
         ctx.beginPath();
-        ctx.moveTo(orb.x, orb.y);
-        ctx.lineTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.closePath();
-        ctx.fill();
-      }
+        ctx.ellipse(p.x, p.y, p.R * f, p.R * f * 0.92, 0, Math.PI * 1.12, Math.PI * 1.88);
+        ctx.stroke();
+      });
 
-      // orb halo
-      const halo = ctx.createRadialGradient(orb.x, orb.y, orb.R * 0.6, orb.x, orb.y, orb.R * 2.2);
-      halo.addColorStop(0, `rgba(180, 205, 255, ${0.28 + 0.12 * pulse})`);
-      halo.addColorStop(1, "rgba(150, 180, 255, 0)");
-      ctx.fillStyle = halo;
-      ctx.beginPath();
-      ctx.arc(orb.x, orb.y, orb.R * 2.2, 0, Math.PI * 2);
-      ctx.fill();
+      // thin connector lines from each node toward the planet hub
+      ctx.strokeStyle = "rgba(120, 160, 220, 0.08)";
+      state.nodes.forEach((n) => {
+        ctx.beginPath();
+        ctx.moveTo(n.x, n.y);
+        ctx.lineTo(p.x, p.y - p.R * 0.72);
+        ctx.stroke();
+      });
 
       ctx.globalCompositeOperation = "source-over";
 
-      // the sphere body
-      const bodyGrad = ctx.createRadialGradient(
-        orb.x - orb.R * 0.3, orb.y - orb.R * 0.35, orb.R * 0.1,
-        orb.x, orb.y, orb.R
-      );
-      bodyGrad.addColorStop(0, "#f2f5ff");
-      bodyGrad.addColorStop(0.6, "#c9d2e6");
-      bodyGrad.addColorStop(0.92, "#8f9ab8");
-      bodyGrad.addColorStop(1, "#5a6480");
-      ctx.fillStyle = bodyGrad;
+      // planet body
       ctx.beginPath();
-      ctx.arc(orb.x, orb.y, orb.R, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, p.R, 0, Math.PI * 2);
+      const pg = ctx.createRadialGradient(p.x, p.y - p.R * 0.4, p.R * 0.2, p.x, p.y, p.R);
+      pg.addColorStop(0, "#16305a");
+      pg.addColorStop(0.6, "#0b1a34");
+      pg.addColorStop(1, "#060c18");
+      ctx.fillStyle = pg;
       ctx.fill();
 
-      // pocked surface (clipped to the sphere)
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(orb.x, orb.y, orb.R, 0, Math.PI * 2);
-      ctx.clip();
-      state.craters.forEach((c) => {
-        const px = orb.x + Math.cos(c.a) * c.d * orb.R;
-        const py = orb.y + Math.sin(c.a) * c.d * orb.R;
-        const cr = c.r * orb.R;
-        const g = ctx.createRadialGradient(px, py, 0, px, py, cr);
-        if (c.dark) {
-          g.addColorStop(0, "rgba(70, 78, 100, 0.5)");
-          g.addColorStop(1, "rgba(70, 78, 100, 0)");
-        } else {
-          g.addColorStop(0, "rgba(255, 255, 255, 0.5)");
-          g.addColorStop(1, "rgba(255, 255, 255, 0)");
-        }
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(px, py, cr, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      // soft terminator shadow on the lower-left
-      const term = ctx.createRadialGradient(
-        orb.x + orb.R * 0.5, orb.y + orb.R * 0.55, orb.R * 0.2,
-        orb.x + orb.R * 0.2, orb.y + orb.R * 0.3, orb.R * 1.4
-      );
-      term.addColorStop(0, "rgba(10, 14, 30, 0)");
-      term.addColorStop(1, "rgba(10, 14, 30, 0.55)");
-      ctx.fillStyle = term;
-      ctx.fillRect(orb.x - orb.R, orb.y - orb.R, orb.R * 2, orb.R * 2);
-      ctx.restore();
-
-      // crisp rim highlight
       ctx.globalCompositeOperation = "lighter";
+      // atmosphere rim on the visible top edge
+      const rimY = p.y - p.R;
+      const atmo = ctx.createLinearGradient(0, rimY - 40, 0, rimY + 60);
+      atmo.addColorStop(0, "rgba(120, 190, 255, 0)");
+      atmo.addColorStop(0.55, "rgba(120, 190, 255, 0.28)");
+      atmo.addColorStop(1, "rgba(120, 190, 255, 0)");
+      ctx.fillStyle = atmo;
+      ctx.fillRect(0, rimY - 40, W, 100);
       ctx.lineWidth = 2;
-      ctx.strokeStyle = `rgba(210, 225, 255, ${0.5 * pulse + 0.3})`;
+      ctx.strokeStyle = "rgba(160, 210, 255, 0.5)";
       ctx.beginPath();
-      ctx.arc(orb.x, orb.y, orb.R - 1, Math.PI * 1.15, Math.PI * 1.9);
+      ctx.ellipse(p.x, p.y, p.R, p.R, 0, Math.PI * 1.16, Math.PI * 1.84);
       ctx.stroke();
 
-      // horizon: cloud band + warm city glow beneath the orb
-      const glow = ctx.createRadialGradient(orb.x, H, 0, orb.x, H, W * 0.7);
-      glow.addColorStop(0, "rgba(240, 170, 90, 0.35)");
-      glow.addColorStop(0.4, "rgba(210, 120, 60, 0.18)");
-      glow.addColorStop(1, "rgba(210, 120, 60, 0)");
-      ctx.fillStyle = glow;
-      ctx.fillRect(0, H * 0.6, W, H * 0.4);
+      // destination nodes
+      state.nodes.forEach((n) => {
+        const [r, g, b] = n.col;
+        const pulse = 0.6 + 0.4 * (0.5 + 0.5 * Math.sin(t * 1.4 + n.phase));
+
+        // glow
+        const glow = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 2.6);
+        glow.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${0.4 * pulse})`);
+        glow.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r * 2.6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // core disc
+        const disc = ctx.createRadialGradient(n.x - n.r * 0.3, n.y - n.r * 0.3, 0, n.x, n.y, n.r);
+        disc.addColorStop(0, `rgba(${Math.min(255, r + 60)}, ${Math.min(255, g + 60)}, ${Math.min(255, b + 60)}, 0.95)`);
+        disc.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.55)`);
+        ctx.fillStyle = disc;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // outer ring
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.8 * pulse})`;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r + 6, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // tick marks around the ring (HUD detail)
+        for (let k = 0; k < 8; k++) {
+          const a = (Math.PI / 4) * k + t * 0.15;
+          const r1 = n.r + 8;
+          const r2 = n.r + 12;
+          ctx.beginPath();
+          ctx.moveTo(n.x + Math.cos(a) * r1, n.y + Math.sin(a) * r1);
+          ctx.lineTo(n.x + Math.cos(a) * r2, n.y + Math.sin(a) * r2);
+          ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.4 * pulse})`;
+          ctx.stroke();
+        }
+
+        // orbiting satellites
+        n.sats.forEach((sat) => {
+          sat.ang += sat.speed * dt;
+          const sx = n.x + Math.cos(sat.ang) * sat.dist;
+          const sy = n.y + Math.sin(sat.ang) * sat.dist * 0.6;
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
+          ctx.beginPath();
+          ctx.arc(sx, sy, sat.size, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      });
+
+      // selection reticle — eases between nodes like a cursor
+      const active = state.nodes[Math.floor(t / 3.2) % state.nodes.length];
+      state.cur.x += (active.x - state.cur.x) * 0.05;
+      state.cur.y += (active.y - state.cur.y) * 0.05;
+      const rr = active.r + 18;
+      const spin = t * 0.6;
+      ctx.strokeStyle = "rgba(220, 235, 255, 0.85)";
+      ctx.lineWidth = 2;
+      for (let q = 0; q < 4; q++) {
+        const a0 = spin + (Math.PI / 2) * q + 0.3;
+        const a1 = a0 + 0.5;
+        ctx.beginPath();
+        ctx.arc(state.cur.x, state.cur.y, rr, a0, a1);
+        ctx.stroke();
+      }
+      // pulsing lock ring
+      const lock = 0.5 + 0.5 * Math.sin(t * 4);
+      ctx.strokeStyle = `rgba(220, 235, 255, ${0.3 * lock})`;
+      ctx.beginPath();
+      ctx.arc(state.cur.x, state.cur.y, rr + 5 * lock, 0, Math.PI * 2);
+      ctx.stroke();
 
       ctx.globalCompositeOperation = "source-over";
-      // cloud band silhouette
-      ctx.beginPath();
-      ctx.moveTo(0, H);
-      for (let x = 0; x <= W; x += 16) {
-        const y = H * 0.86 + Math.sin(x * 0.006 + t * 0.15) * 12 + Math.sin(x * 0.013 + 1.3) * 8;
-        ctx.lineTo(x, y);
-      }
-      ctx.lineTo(W, H);
-      ctx.closePath();
-      const cloud = ctx.createLinearGradient(0, H * 0.8, 0, H);
-      cloud.addColorStop(0, "rgba(20, 16, 26, 0.6)");
-      cloud.addColorStop(1, "rgba(8, 6, 12, 0.95)");
-      ctx.fillStyle = cloud;
-      ctx.fill();
 
       // vignette
-      const vig = ctx.createRadialGradient(W * 0.5, H * 0.45, Math.min(W, H) * 0.3, W * 0.5, H * 0.5, Math.max(W, H) * 0.75);
+      const vig = ctx.createRadialGradient(W * 0.5, H * 0.42, Math.min(W, H) * 0.32, W * 0.5, H * 0.5, Math.max(W, H) * 0.75);
       vig.addColorStop(0, "rgba(0,0,0,0)");
-      vig.addColorStop(1, "rgba(2, 3, 8, 0.7)");
+      vig.addColorStop(1, "rgba(2, 3, 8, 0.72)");
       ctx.fillStyle = vig;
       ctx.fillRect(0, 0, W, H);
     },
