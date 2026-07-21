@@ -13,6 +13,10 @@ import {
   adminFetchMessages,
   adminDeleteMessage,
   adminUploadImage,
+  adminFetchInterests,
+  adminCreateInterest,
+  adminUpdateInterest,
+  adminDeleteInterest,
 } from "../api";
 
 function Admin() {
@@ -67,7 +71,7 @@ function Admin() {
       </div>
 
       <div className="admin-tabs">
-        {["projects", "posts", "messages"].map((t) => (
+        {["projects", "interests", "posts", "messages"].map((t) => (
           <button
             key={t}
             className={`admin-tab ${tab === t ? "active" : ""}`}
@@ -79,6 +83,7 @@ function Admin() {
       </div>
 
       {tab === "projects" && <ProjectsAdmin token={token} />}
+      {tab === "interests" && <InterestsAdmin token={token} />}
       {tab === "posts" && <PostsAdmin token={token} />}
       {tab === "messages" && <MessagesAdmin token={token} />}
     </div>
@@ -391,6 +396,139 @@ function PostsAdmin({ token }) {
           <div style={{ display: "flex", gap: 8 }}>
             <button className="btn btn-small btn-primary" onClick={() => handleEdit(p)}>Edit</button>
             <button className="btn btn-small btn-danger" onClick={() => handleDelete(p.id)}>Delete</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Interests Tab
+// ---------------------------------------------------------------------------
+
+const THEME_OPTIONS = [
+  { value: "destiny2", label: "Destiny 2 (Vow raid)" },
+  { value: "osu", label: "osu! (blurred gameplay)" },
+  { value: "wakesurf", label: "Wakesurfing (water)" },
+  { value: "none", label: "None (keep aurora)" },
+];
+
+const EMPTY_INTEREST = {
+  title: "", tag: "", blurb: "", description: "",
+  accent: "#6fe7c1", theme: "none", sort_order: 0,
+};
+
+function InterestsAdmin({ token }) {
+  const [interests, setInterests] = useState([]);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState(EMPTY_INTEREST);
+
+  const load = () => adminFetchInterests(token).then((data) =>
+    setInterests(Array.isArray(data) ? data : [])
+  );
+  useEffect(() => { load(); }, []);
+
+  const resetForm = () => {
+    setForm(EMPTY_INTEREST);
+    setEditing(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (editing) {
+      await adminUpdateInterest(token, editing, form);
+    } else {
+      await adminCreateInterest(token, form);
+    }
+    resetForm();
+    load();
+  };
+
+  const handleEdit = (it) => {
+    setEditing(it.id);
+    setForm({
+      title: it.title || "",
+      tag: it.tag || "",
+      blurb: it.blurb || "",
+      description: it.description || "",
+      accent: it.accent || "#6fe7c1",
+      theme: it.theme || "none",
+      sort_order: it.sort_order ?? 0,
+    });
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Delete this interest?")) {
+      await adminDeleteInterest(token, id);
+      if (editing === id) resetForm();
+      load();
+    }
+  };
+
+  const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+
+  return (
+    <div>
+      <form onSubmit={handleSubmit} className="card">
+        <h3 style={{ marginBottom: 16 }}>{editing ? "Edit Interest" : "Add Interest"}</h3>
+        <div className="form-group">
+          <label>Title</label>
+          <input value={form.title} onChange={set("title")} required />
+        </div>
+        <div className="form-group">
+          <label>Tag (small label on the front)</label>
+          <input value={form.tag} onChange={set("tag")} placeholder="e.g. Raiding · PvP · Lore" />
+        </div>
+        <div className="form-group">
+          <label>Blurb (one-liner on the front)</label>
+          <input value={form.blurb} onChange={set("blurb")} placeholder="e.g. Endgame raids and Crucible." />
+        </div>
+        <div className="form-group">
+          <label>Description (back of the card)</label>
+          <textarea value={form.description} onChange={set("description")} />
+        </div>
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+          <div className="form-group" style={{ flex: "1 1 200px" }}>
+            <label>Background theme</label>
+            <select value={form.theme} onChange={set("theme")}>
+              {THEME_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group" style={{ width: 120 }}>
+            <label>Accent</label>
+            <input type="color" value={form.accent} onChange={set("accent")} style={{ height: 44, padding: 4 }} />
+          </div>
+          <div className="form-group" style={{ width: 120 }}>
+            <label>Order</label>
+            <input type="number" value={form.sort_order} onChange={set("sort_order")} />
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button type="submit" className="btn btn-primary">{editing ? "Update" : "Add"} Interest</button>
+          {editing && <button type="button" className="btn btn-small" onClick={resetForm}>Cancel</button>}
+        </div>
+      </form>
+
+      <h3 style={{ margin: "24px 0 12px" }}>All Interests</h3>
+      {interests.length === 0 && (
+        <p className="card-meta">
+          No interests found. If this is unexpected, run the database migration
+          (database/add_interests.sql) to create and seed the table.
+        </p>
+      )}
+      {interests.map((it) => (
+        <div className="card" key={it.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+          <div>
+            <strong>{it.title}</strong>
+            <span className="tag" style={{ marginLeft: 8 }}>{it.theme}</span>
+            <p className="card-meta">{it.tag}</p>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="btn btn-small btn-primary" onClick={() => handleEdit(it)}>Edit</button>
+            <button className="btn btn-small btn-danger" onClick={() => handleDelete(it.id)}>Delete</button>
           </div>
         </div>
       ))}

@@ -79,6 +79,28 @@ CREATE INDEX idx_project_tags_tag_id ON project_tags (tag_id);
 
 
 -- ============================================================================
+-- TABLE: interests
+-- Stores the cards shown on the Interests page. Each interest maps to a
+-- coded background "theme" (destiny2 / osu / wakesurf / none) and carries
+-- editable text plus an accent color.
+-- ============================================================================
+CREATE TABLE interests (
+    id          SERIAL PRIMARY KEY,
+    title       VARCHAR(120) NOT NULL,
+    tag         VARCHAR(160) NOT NULL DEFAULT '',   -- small mono label (front)
+    blurb       VARCHAR(300) NOT NULL DEFAULT '',   -- one-liner (front)
+    description TEXT         NOT NULL DEFAULT '',    -- longer text (back of card)
+    accent      VARCHAR(9)   NOT NULL DEFAULT '#6fe7c1', -- hex accent color
+    theme       VARCHAR(40)  NOT NULL DEFAULT 'none',    -- background theme key
+    sort_order  INTEGER      NOT NULL DEFAULT 0,          -- display order (lower = first)
+    created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Index: speeds up ordering by display order
+CREATE INDEX idx_interests_sort_order ON interests (sort_order);
+
+
+-- ============================================================================
 -- TABLE: contact_messages
 -- Stores messages submitted through the contact form. In production,
 -- these are also forwarded via AWS SES email.

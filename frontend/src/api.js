@@ -41,6 +41,11 @@ export async function fetchPost(slug) {
   return res.json();
 }
 
+export async function fetchInterests() {
+  const res = await fetch(`${API_BASE}/interests`);
+  return res.json();
+}
+
 export async function submitContact(data) {
   const res = await fetch(`${API_BASE}/contact`, {
     method: "POST",
@@ -140,6 +145,39 @@ export async function adminUpdatePost(token, id, data) {
 
 export async function adminDeletePost(token, id) {
   const res = await fetch(`${API_BASE}/admin/posts/${id}`, {
+    method: "DELETE",
+    headers: adminHeaders(token),
+  });
+  return res.json();
+}
+
+export async function adminFetchInterests(token) {
+  const res = await fetch(`${API_BASE}/admin/interests`, {
+    headers: adminHeaders(token),
+  });
+  return res.json();
+}
+
+export async function adminCreateInterest(token, data) {
+  const res = await fetch(`${API_BASE}/admin/interests`, {
+    method: "POST",
+    headers: adminHeaders(token),
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+export async function adminUpdateInterest(token, id, data) {
+  const res = await fetch(`${API_BASE}/admin/interests/${id}`, {
+    method: "PUT",
+    headers: adminHeaders(token),
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+export async function adminDeleteInterest(token, id) {
+  const res = await fetch(`${API_BASE}/admin/interests/${id}`, {
     method: "DELETE",
     headers: adminHeaders(token),
   });

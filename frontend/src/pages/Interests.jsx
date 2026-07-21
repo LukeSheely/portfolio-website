@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from "react";
 import Reveal from "../components/Reveal";
 import { useBackground } from "../context/BackgroundContext";
+import { fetchInterests } from "../api";
 
-const INTERESTS = [
+// Shown if the API is unreachable or the interests table isn't seeded yet.
+const FALLBACK_INTERESTS = [
   {
     id: "destiny2",
     title: "Destiny 2",
     accent: "#3ce0cd",
     tag: "Raiding · PvP · Lore",
     blurb: "Endgame raids and Crucible.",
-    back:
+    theme: "destiny2",
+    description:
       "Deep in the endgame — day-one raid attempts, weekly clears, and a soft spot for the Vow of the Disciple encounter design. Equal parts mechanics, coordination, and lore rabbit-holes.",
   },
   {
@@ -18,7 +21,8 @@ const INTERESTS = [
     accent: "#ff66ab",
     tag: "Rhythm · Aim · Reaction",
     blurb: "Clicking circles to music.",
-    back:
+    theme: "osu",
+    description:
       "The rhythm game that wrecked my reaction time in the best way. Chasing cleaner aim, higher accuracy, and that flow state where the map just reads itself.",
   },
   {
@@ -27,28 +31,47 @@ const INTERESTS = [
     accent: "#41b8e0",
     tag: "Summers on the water",
     blurb: "Trading the desk for the lake.",
-    back:
+    theme: "wakesurf",
+    description:
       "Warm-weather reset button — chasing the wake, carving lines, and generally being anywhere near open water when the weather allows.",
   },
 ];
 
+const KNOWN_THEMES = ["destiny2", "osu", "wakesurf"];
+
 function Interests() {
   const { setTheme } = useBackground();
+  const [interests, setInterests] = useState(FALLBACK_INTERESTS);
   const [flipped, setFlipped] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetchInterests()
+      .then((data) => {
+        if (alive && Array.isArray(data) && data.length > 0) setInterests(data);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // Always restore the noir background when leaving the page.
   useEffect(() => () => setTheme("noir"), [setTheme]);
 
-  const activate = (id) => setTheme(id);
+  // Map an interest's theme to a background key (unknown → noir).
+  const bgFor = (it) => (KNOWN_THEMES.includes(it.theme) ? it.theme : "noir");
+
+  const activate = (it) => setTheme(bgFor(it));
 
   // Touch/click: toggle the flip and drive the background too.
-  const toggle = (id) => {
-    if (flipped === id) {
+  const toggle = (it) => {
+    if (flipped === it.id) {
       setFlipped(null);
       setTheme("noir");
     } else {
-      setFlipped(id);
-      setTheme(id);
+      setFlipped(it.id);
+      setTheme(bgFor(it));
     }
   };
 
@@ -63,13 +86,13 @@ function Interests() {
       </Reveal>
 
       <div className="interests-grid" onMouseLeave={() => setTheme("noir")}>
-        {INTERESTS.map((it, i) => (
+        {interests.map((it, i) => (
           <Reveal key={it.id} delay={i * 90}>
             <div
               className={`interest-card${flipped === it.id ? " is-flipped" : ""}`}
-              style={{ "--ac": it.accent }}
-              onMouseEnter={() => activate(it.id)}
-              onClick={() => toggle(it.id)}
+              style={{ "--ac": it.accent || "#6fe7c1" }}
+              onMouseEnter={() => activate(it)}
+              onClick={() => toggle(it)}
             >
               <div className="interest-card__inner">
                 <div className="interest-card__face interest-card__front">
@@ -82,7 +105,7 @@ function Interests() {
                 <div className="interest-card__face interest-card__back">
                   <span className="interest-card__tag">{it.title}</span>
                   <div className="interest-card__spacer" />
-                  <p className="interest-card__desc">{it.back}</p>
+                  <p className="interest-card__desc">{it.description}</p>
                 </div>
               </div>
             </div>
