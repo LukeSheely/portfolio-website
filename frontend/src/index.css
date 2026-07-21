@@ -676,9 +676,11 @@ main {
   padding: 26px;
   border-radius: 20px;
   border: 1px solid var(--border);
-  background: var(--glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* Darker, more opaque than the glass cards: these sit over bright
+     animated interest backgrounds, so text needs a solid backing. */
+  background: rgba(9, 11, 17, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   box-shadow: var(--shadow);
   overflow: hidden;
   backface-visibility: hidden;
