@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { fetchProjects, fetchTags } from "../api";
 import Reveal from "../components/Reveal";
 import Scramble from "../components/Scramble";
+import NeuralHero from "../components/NeuralHero";
 
 function Home() {
   const [featured, setFeatured] = useState([]);
@@ -49,8 +50,11 @@ function Home() {
           </Reveal>
         </div>
 
-        <div className="hero-portrait">
-          <img src="/headshot.png" alt="Luke Sheely" />
+        <div className="hero-visual">
+          <NeuralHero />
+          <div className="hero-portrait">
+            <img src="/headshot.png" alt="Luke Sheely" />
+          </div>
         </div>
       </section>
 
