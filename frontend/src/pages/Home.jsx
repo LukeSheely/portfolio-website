@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { fetchProjects, fetchTags } from "../api";
 import Reveal from "../components/Reveal";
+import Scramble from "../components/Scramble";
 
 function Home() {
   const [featured, setFeatured] = useState([]);
@@ -25,7 +26,7 @@ function Home() {
           </Reveal>
           <Reveal delay={60}>
             <h1 className="hero-name">
-              Hi, I'm <span className="grad">Luke Sheely</span>
+              Hi, I'm <Scramble className="grad" text="Luke Sheely" />
             </h1>
           </Reveal>
           <Reveal delay={120}>
@@ -38,10 +39,10 @@ function Home() {
           </Reveal>
           <Reveal delay={180}>
             <div className="hero-actions">
-              <Link to="/projects" className="btn btn-primary">
+              <Link to="/projects" className="btn btn-primary magnetic" data-magnetic="">
                 View Projects
               </Link>
-              <Link to="/contact" className="btn btn-ghost">
+              <Link to="/contact" className="btn btn-ghost magnetic" data-magnetic="">
                 Get in Touch
               </Link>
             </div>
