@@ -21,7 +21,7 @@ function Home() {
           <Reveal>
             <div className="status-pill">
               <span className="live" aria-hidden="true" />
-              open to ML internships · 2026
+              open to fall 2026 internships
             </div>
           </Reveal>
           <Reveal delay={60}>
