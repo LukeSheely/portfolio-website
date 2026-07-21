@@ -107,6 +107,47 @@ h1, h2, h3, h4 {
   pointer-events: none;
 }
 
+/* WebGL shader aurora — sits above the base, below content */
+.shader-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+/* When the shader is running, retire the CSS blobs */
+body.webgl-on .aurora__blob {
+  display: none;
+}
+
+/* Scroll-driven progress bar (modern CSS scroll timelines, no JS) */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  z-index: 200;
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  background: linear-gradient(90deg, var(--accent), var(--gold));
+  box-shadow: 0 0 12px rgba(111, 231, 193, 0.6);
+  animation: grow-progress auto linear;
+  animation-timeline: scroll(root block);
+}
+@keyframes grow-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* Magnetic elements follow the cursor slightly */
+.magnetic {
+  transition: transform 0.35s var(--ease);
+  will-change: transform;
+}
+
 .aurora__blob {
   position: absolute;
   border-radius: 50%;
@@ -484,7 +525,10 @@ main {
   -webkit-backdrop-filter: blur(10px);
   box-shadow: var(--shadow);
   overflow: hidden;
-  transition: transform 0.4s var(--ease), border-color 0.4s var(--ease),
+  transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg))
+    translateY(var(--ty, 0px));
+  transform-style: preserve-3d;
+  transition: transform 0.2s var(--ease), border-color 0.4s var(--ease),
     box-shadow 0.4s var(--ease), background 0.4s var(--ease);
 }
 /* Mouse-tracked spotlight (vars set in JS: --mx / --my) */
@@ -503,7 +547,7 @@ main {
   pointer-events: none;
 }
 .card:hover {
-  transform: translateY(-4px);
+  --ty: -6px;
   border-color: var(--border-strong);
   background: var(--glass-strong);
   box-shadow: var(--shadow-hover);
@@ -837,7 +881,9 @@ main {
   html { scroll-behavior: auto; }
   .aurora__blob,
   .navbar-brand .dot { animation: none !important; }
-  .cursor-glow { display: none; }
+  .cursor-glow,
+  .scroll-progress { display: none; }
+  .card { transform: none !important; }
   *,
   *::before,
   *::after {

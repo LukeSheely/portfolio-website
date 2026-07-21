@@ -7,25 +7,66 @@ import BlogPost from "./pages/BlogPost";
 import Contact from "./pages/Contact";
 import Admin from "./pages/Admin";
 import AuroraBackground from "./components/AuroraBackground";
+import ShaderAurora from "./components/ShaderAurora";
 
 function App() {
-  // Delegated cursor-spotlight for glass cards: track the pointer and feed
-  // its position into each card via CSS custom properties (--mx / --my).
+  // Pointer interactions: glass-card spotlight + 3D tilt, and magnetic buttons.
   useEffect(() => {
-    const onMove = (e) => {
-      const card = e.target.closest?.(".card");
-      if (!card) return;
-      const r = card.getBoundingClientRect();
-      card.style.setProperty("--mx", `${e.clientX - r.left}px`);
-      card.style.setProperty("--my", `${e.clientY - r.top}px`);
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const TILT = 6; // max degrees
+    let activeCard = null;
+
+    const clearTilt = (card) => {
+      card.style.setProperty("--rx", "0deg");
+      card.style.setProperty("--ry", "0deg");
     };
+
+    const onMove = (e) => {
+      // --- glass cards ---
+      const card = e.target.closest?.(".card");
+      if (activeCard && card !== activeCard) {
+        clearTilt(activeCard);
+        activeCard = null;
+      }
+      if (card) {
+        activeCard = card;
+        const r = card.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width;
+        const py = (e.clientY - r.top) / r.height;
+        card.style.setProperty("--mx", `${e.clientX - r.left}px`);
+        card.style.setProperty("--my", `${e.clientY - r.top}px`);
+        if (!reduced) {
+          card.style.setProperty("--ry", `${(px - 0.5) * 2 * TILT}deg`);
+          card.style.setProperty("--rx", `${-(py - 0.5) * 2 * TILT}deg`);
+        }
+      }
+
+      // --- magnetic buttons ---
+      if (reduced) return;
+      document.querySelectorAll("[data-magnetic]").forEach((el) => {
+        const r = el.getBoundingClientRect();
+        const dx = e.clientX - (r.left + r.width / 2);
+        const dy = e.clientY - (r.top + r.height / 2);
+        const dist = Math.hypot(dx, dy);
+        const radius = Math.max(r.width, r.height) / 2 + 70;
+        if (dist < radius) {
+          const s = 1 - dist / radius;
+          el.style.transform = `translate(${dx * 0.28 * s}px, ${dy * 0.28 * s}px)`;
+        } else {
+          el.style.transform = "";
+        }
+      });
+    };
+
     document.addEventListener("pointermove", onMove);
     return () => document.removeEventListener("pointermove", onMove);
   }, []);
 
   return (
     <BrowserRouter>
+      <div className="scroll-progress" aria-hidden="true" />
       <AuroraBackground />
+      <ShaderAurora />
 
       <nav className="navbar">
         <div className="container">
