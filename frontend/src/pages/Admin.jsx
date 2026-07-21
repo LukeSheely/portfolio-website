@@ -408,9 +408,10 @@ function PostsAdmin({ token }) {
 // ---------------------------------------------------------------------------
 
 const THEME_OPTIONS = [
-  { value: "destiny2", label: "Destiny 2 (Vow raid)" },
+  { value: "destiny2", label: "Destiny 2 (star map)" },
   { value: "osu", label: "osu! (blurred gameplay)" },
   { value: "wakesurf", label: "Wakesurfing (water)" },
+  { value: "geometrydash", label: "Geometry Dash (Nine Circles)" },
   { value: "none", label: "None (keep aurora)" },
 ];
 

@@ -35,9 +35,19 @@ const FALLBACK_INTERESTS = [
     description:
       "Warm-weather reset button — chasing the wake, carving lines, and generally being anywhere near open water when the weather allows.",
   },
+  {
+    id: "geometrydash",
+    title: "Geometry Dash",
+    accent: "#3be0ff",
+    tag: "Wave · Spikes · Attempts",
+    blurb: "One more attempt.",
+    theme: "geometrydash",
+    description:
+      "Muscle-memory platforming to the beat — grinding wave corridors, memorizing spike timings, and chasing that one clean run. Nine Circles on loop.",
+  },
 ];
 
-const KNOWN_THEMES = ["destiny2", "osu", "wakesurf"];
+const KNOWN_THEMES = ["destiny2", "osu", "wakesurf", "geometrydash"];
 
 function Interests() {
   const { setTheme } = useBackground();

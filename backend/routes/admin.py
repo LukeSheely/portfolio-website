@@ -385,7 +385,7 @@ def delete_message(message_id):
 # Interests CRUD
 # ---------------------------------------------------------------------------
 
-_ALLOWED_THEMES = {"destiny2", "osu", "wakesurf", "none"}
+_ALLOWED_THEMES = {"destiny2", "osu", "wakesurf", "geometrydash", "none"}
 
 
 @admin_bp.route("/api/admin/interests", methods=["GET"])
