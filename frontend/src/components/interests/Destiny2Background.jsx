@@ -55,13 +55,14 @@ function Destiny2Background() {
       const pitY = H * 0.82;
       const flick = 0.82 + 0.18 * Math.sin(t * 6.0) * Math.sin(t * 2.3);
 
-      // smoky base
-      ctx.fillStyle = "#0a0605";
+      // cool grey smoke up top, warming toward the molten base
+      ctx.fillStyle = "#08080a";
       ctx.fillRect(0, 0, W, H);
       const haze = ctx.createLinearGradient(0, 0, 0, H);
-      haze.addColorStop(0, "rgba(30, 10, 8, 0.7)");
-      haze.addColorStop(0.5, "rgba(48, 16, 10, 0.35)");
-      haze.addColorStop(1, "rgba(90, 26, 10, 0.15)");
+      haze.addColorStop(0, "rgba(46, 48, 56, 0.55)");
+      haze.addColorStop(0.4, "rgba(40, 30, 30, 0.32)");
+      haze.addColorStop(0.75, "rgba(70, 26, 14, 0.28)");
+      haze.addColorStop(1, "rgba(120, 40, 14, 0.2)");
       ctx.fillStyle = haze;
       ctx.fillRect(0, 0, W, H);
 
@@ -108,6 +109,19 @@ function Destiny2Background() {
       const halfTop = mw * 0.5;
       const halfBot = mw * 0.62;
 
+      // Rhulk's arena floor ring — a glowing orange circle at the base
+      ctx.save();
+      ctx.translate(cx, pitY);
+      ctx.scale(1, 0.32);
+      [mw * 2.6, mw * 1.7].forEach((rr, i) => {
+        ctx.beginPath();
+        ctx.arc(0, 0, rr, 0, Math.PI * 2);
+        ctx.lineWidth = (i === 0 ? 3 : 2) / 0.32;
+        ctx.strokeStyle = `rgba(${MOLTEN}, ${(i === 0 ? 0.5 : 0.35) * flick})`;
+        ctx.stroke();
+      });
+      ctx.restore();
+
       // bright core light escaping from the base slit, up the monolith
       const beam = ctx.createLinearGradient(cx, botY, cx, topY);
       beam.addColorStop(0, `rgba(${HOT}, ${0.7 * flick})`);
@@ -116,13 +130,36 @@ function Destiny2Background() {
       ctx.fillStyle = beam;
       ctx.fillRect(cx - mw * 0.12, topY, mw * 0.24, botY - topY);
 
-      // monolith silhouette (dark), drawn over rays/glow
       ctx.globalCompositeOperation = "source-over";
+
+      // faint serpent coiled at the base (Xivu Arath's brood), abstract
+      ctx.strokeStyle = "rgba(6, 3, 3, 0.85)";
+      ctx.lineWidth = mw * 0.14;
+      ctx.lineCap = "round";
+      [-1, 1].forEach((s) => {
+        ctx.beginPath();
+        ctx.moveTo(cx + s * mw * 0.2, botY + mw * 0.05);
+        ctx.bezierCurveTo(
+          cx + s * mw * 1.4, botY - mw * 0.1,
+          cx + s * mw * 1.1, botY - mw * 0.7 + Math.sin(t * 0.8) * 6,
+          cx + s * mw * 1.9, botY - mw * 0.45
+        );
+        ctx.stroke();
+      });
+
+      // monolith: capstone + tapered body silhouette
+      const capH = mw * 0.42;
+      const capHalf = mw * 0.72;
+      const bodyTop = topY + capH;
       ctx.beginPath();
-      ctx.moveTo(cx - halfTop, topY);
-      ctx.lineTo(cx + halfTop, topY);
+      ctx.moveTo(cx - capHalf, topY);
+      ctx.lineTo(cx + capHalf, topY);
+      ctx.lineTo(cx + capHalf, bodyTop);
+      ctx.lineTo(cx + halfTop, bodyTop);
       ctx.lineTo(cx + halfBot, botY);
       ctx.lineTo(cx - halfBot, botY);
+      ctx.lineTo(cx - halfTop, bodyTop);
+      ctx.lineTo(cx - capHalf, bodyTop);
       ctx.closePath();
       const body = ctx.createLinearGradient(cx, topY, cx, botY);
       body.addColorStop(0, "#0c0706");
@@ -132,26 +169,34 @@ function Destiny2Background() {
       ctx.fill();
 
       ctx.globalCompositeOperation = "lighter";
-      // warm rim light on the edges
+      // warm rim light on the edges + capstone
       ctx.lineWidth = 2;
       ctx.strokeStyle = `rgba(${MOLTEN}, ${0.5 * flick})`;
       ctx.beginPath();
-      ctx.moveTo(cx - halfTop, topY);
+      ctx.moveTo(cx - capHalf, topY);
+      ctx.lineTo(cx + capHalf, topY);
+      ctx.moveTo(cx - halfTop, bodyTop);
       ctx.lineTo(cx - halfBot, botY);
-      ctx.moveTo(cx + halfTop, topY);
+      ctx.moveTo(cx + halfTop, bodyTop);
       ctx.lineTo(cx + halfBot, botY);
+      ctx.stroke();
+      // capstone score line + notch
+      ctx.strokeStyle = `rgba(${AMBER}, ${0.4 * flick})`;
+      ctx.beginPath();
+      ctx.moveTo(cx - capHalf * 0.8, bodyTop - 3);
+      ctx.lineTo(cx + capHalf * 0.8, bodyTop - 3);
       ctx.stroke();
 
       // central slit
       ctx.strokeStyle = `rgba(${HOT}, ${0.55 * flick})`;
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(cx, topY + mw * 0.3);
+      ctx.moveTo(cx, bodyTop + mw * 0.04);
       ctx.lineTo(cx, botY - mw * 0.1);
       ctx.stroke();
 
       // carved runes: spine branches with glow
-      const spineTop = topY + mw * 0.34;
+      const spineTop = bodyTop + mw * 0.12;
       const spineBot = botY - mw * 0.2;
       ctx.lineCap = "round";
       state.branches.forEach((b) => {
