@@ -150,8 +150,8 @@ INSERT INTO interests (title, tag, blurb, description, accent, theme, sort_order
     'Destiny 2',
     'Raiding · PvP · Lore',
     'Endgame raids and Crucible.',
-    'Deep in the endgame — day-one raid attempts, weekly clears, and a soft spot for the Vow of the Disciple encounter design. Equal parts mechanics, coordination, and lore rabbit-holes.',
-    '#ff7a33',
+    'Deep in the endgame — day-one raid attempts, weekly clears, Trials weekends, and tumbling down the lore rabbit-hole. The Traveler''s got me hooked.',
+    '#d9b877',
     'destiny2',
     1
 ),

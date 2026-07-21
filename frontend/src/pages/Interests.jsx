@@ -8,12 +8,12 @@ const FALLBACK_INTERESTS = [
   {
     id: "destiny2",
     title: "Destiny 2",
-    accent: "#ff7a33",
+    accent: "#d9b877",
     tag: "Raiding · PvP · Lore",
     blurb: "Endgame raids and Crucible.",
     theme: "destiny2",
     description:
-      "Deep in the endgame — day-one raid attempts, weekly clears, and a soft spot for the Vow of the Disciple encounter design. Equal parts mechanics, coordination, and lore rabbit-holes.",
+      "Deep in the endgame — day-one raid attempts, weekly clears, Trials weekends, and tumbling down the lore rabbit-hole. The Traveler's got me hooked.",
   },
   {
     id: "osu",
