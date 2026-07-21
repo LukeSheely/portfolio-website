@@ -26,7 +26,7 @@ SELECT * FROM (VALUES
         'Raiding · PvP · Lore',
         'Endgame raids and Crucible.',
         'Deep in the endgame — day-one raid attempts, weekly clears, and a soft spot for the Vow of the Disciple encounter design. Equal parts mechanics, coordination, and lore rabbit-holes.',
-        '#3ce0cd',
+        '#ff7a33',
         'destiny2',
         1
     ),

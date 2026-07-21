@@ -8,7 +8,7 @@ const FALLBACK_INTERESTS = [
   {
     id: "destiny2",
     title: "Destiny 2",
-    accent: "#3ce0cd",
+    accent: "#ff7a33",
     tag: "Raiding · PvP · Lore",
     blurb: "Endgame raids and Crucible.",
     theme: "destiny2",
