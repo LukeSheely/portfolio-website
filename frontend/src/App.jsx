@@ -2,8 +2,6 @@ import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
 import Home from "./pages/Home";
 import Projects from "./pages/Projects";
-import Blog from "./pages/Blog";
-import BlogPost from "./pages/BlogPost";
 import Contact from "./pages/Contact";
 import Admin from "./pages/Admin";
 import AuroraBackground from "./components/AuroraBackground";
@@ -13,6 +11,10 @@ function App() {
   // Pointer interactions: glass-card spotlight + 3D tilt, and magnetic buttons.
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Tilt/spotlight/magnetism are cursor affordances — skip on touch so
+    // buttons and cards don't jump around under a finger during scroll.
+    const finePointer = window.matchMedia("(pointer: fine)").matches;
+    if (!finePointer) return;
     const TILT = 6; // max degrees
     let activeCard = null;
 
@@ -84,9 +86,6 @@ function App() {
               <NavLink to="/projects">Projects</NavLink>
             </li>
             <li>
-              <NavLink to="/blog">Blog</NavLink>
-            </li>
-            <li>
               <NavLink to="/contact">Contact</NavLink>
             </li>
             <li>
@@ -100,18 +99,10 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/projects" element={<Projects />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>
-
-      <footer className="footer">
-        <div className="container">
-          Built with React · Flask · PostgreSQL · AWS — designed &amp; coded by Luke Sheely
-        </div>
-      </footer>
     </BrowserRouter>
   );
 }

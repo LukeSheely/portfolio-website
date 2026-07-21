@@ -142,7 +142,10 @@ function ShaderAurora() {
     };
     window.addEventListener("pointermove", onMove);
 
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    // Cap pixel density — phones pack a lot of pixels, and a full-screen
+    // fragment shader at 3x would cook the battery for little visual gain.
+    const smallScreen = window.innerWidth <= 640;
+    const dpr = Math.min(window.devicePixelRatio || 1, smallScreen ? 1.0 : 1.5);
     const resize = () => {
       const w = Math.floor(window.innerWidth * dpr);
       const h = Math.floor(window.innerHeight * dpr);
