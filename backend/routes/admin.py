@@ -382,6 +382,117 @@ def delete_message(message_id):
 
 
 # ---------------------------------------------------------------------------
+# Interests CRUD
+# ---------------------------------------------------------------------------
+
+_ALLOWED_THEMES = {"destiny2", "osu", "wakesurf", "none"}
+
+
+@admin_bp.route("/api/admin/interests", methods=["GET"])
+@require_admin
+def list_interests():
+    """GET /api/admin/interests — List all interest cards in display order."""
+    with get_db() as (conn, cur):
+        cur.execute("""
+            SELECT id, title, tag, blurb, description, accent, theme, sort_order, created_at
+            FROM interests
+            ORDER BY sort_order ASC, id ASC
+        """)
+        interests = cur.fetchall()
+    return jsonify(interests)
+
+
+@admin_bp.route("/api/admin/interests", methods=["POST"])
+@require_admin
+def create_interest():
+    """POST /api/admin/interests — Create a new interest card."""
+    data = request.get_json()
+    if not data or not data.get("title"):
+        return jsonify({"error": "Title is required"}), 400
+
+    theme = data.get("theme", "none")
+    if theme not in _ALLOWED_THEMES:
+        theme = "none"
+
+    with get_db() as (conn, cur):
+        cur.execute("SELECT COALESCE(MAX(sort_order), 0) + 1 AS next_order FROM interests")
+        next_order = cur.fetchone()["next_order"]
+
+        cur.execute("""
+            INSERT INTO interests (title, tag, blurb, description, accent, theme, sort_order)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id, title, created_at
+        """, (
+            data["title"],
+            data.get("tag", ""),
+            data.get("blurb", ""),
+            data.get("description", ""),
+            data.get("accent", "#6fe7c1"),
+            theme,
+            data.get("sort_order", next_order),
+        ))
+        interest = cur.fetchone()
+
+    return jsonify(interest), 201
+
+
+@admin_bp.route("/api/admin/interests/<int:interest_id>", methods=["PUT"])
+@require_admin
+def update_interest(interest_id):
+    """PUT /api/admin/interests/:id — Edit an existing interest card."""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    theme = data.get("theme", "none")
+    if theme not in _ALLOWED_THEMES:
+        theme = "none"
+
+    with get_db() as (conn, cur):
+        cur.execute("""
+            UPDATE interests
+            SET title = %s,
+                tag = %s,
+                blurb = %s,
+                description = %s,
+                accent = %s,
+                theme = %s,
+                sort_order = %s
+            WHERE id = %s
+            RETURNING id, title
+        """, (
+            data.get("title", ""),
+            data.get("tag", ""),
+            data.get("blurb", ""),
+            data.get("description", ""),
+            data.get("accent", "#6fe7c1"),
+            theme,
+            data.get("sort_order", 0),
+            interest_id,
+        ))
+        interest = cur.fetchone()
+
+    if not interest:
+        return jsonify({"error": "Interest not found"}), 404
+
+    return jsonify(interest)
+
+
+@admin_bp.route("/api/admin/interests/<int:interest_id>", methods=["DELETE"])
+@require_admin
+def delete_interest(interest_id):
+    """DELETE /api/admin/interests/:id — Delete an interest card."""
+    with get_db() as (conn, cur):
+        cur.execute("DELETE FROM interests WHERE id = %s RETURNING id", (interest_id,))
+        deleted = cur.fetchone()
+
+    if not deleted:
+        return jsonify({"error": "Interest not found"}), 404
+
+    return jsonify({"message": "Interest deleted"})
+
+
+# ---------------------------------------------------------------------------
 # Image Upload (S3 Integration)
 # ---------------------------------------------------------------------------
 

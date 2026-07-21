@@ -144,6 +144,36 @@ Add indexes on columns you frequently filter or sort by. But don''t over-index �
     '2026-02-05 08:00:00'
 );
 
+-- Interests (Interests page cards)
+INSERT INTO interests (title, tag, blurb, description, accent, theme, sort_order) VALUES
+(
+    'Destiny 2',
+    'Raiding · PvP · Lore',
+    'Endgame raids and Crucible.',
+    'Deep in the endgame — day-one raid attempts, weekly clears, Trials weekends, and tumbling down the lore rabbit-hole. The Traveler''s got me hooked.',
+    '#d9b877',
+    'destiny2',
+    1
+),
+(
+    'osu!',
+    'Rhythm · Aim · Reaction',
+    'Clicking circles to music.',
+    'The rhythm game that wrecked my reaction time in the best way. Chasing cleaner aim, higher accuracy, and that flow state where the map just reads itself.',
+    '#ff66ab',
+    'osu',
+    2
+),
+(
+    'Wakesurfing',
+    'Summers on the water',
+    'Trading the desk for the lake.',
+    'Warm-weather reset button — chasing the wake, carving lines, and generally being anywhere near open water when the weather allows.',
+    '#41b8e0',
+    'wakesurf',
+    3
+);
+
 -- Contact Messages (sample)
 INSERT INTO contact_messages (name, email, message, created_at) VALUES
 (

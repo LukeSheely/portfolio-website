@@ -2,10 +2,13 @@ import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
 import Home from "./pages/Home";
 import Projects from "./pages/Projects";
+import Interests from "./pages/Interests";
 import Contact from "./pages/Contact";
 import Admin from "./pages/Admin";
 import AuroraBackground from "./components/AuroraBackground";
 import ShaderAurora from "./components/ShaderAurora";
+import InterestBackground from "./components/InterestBackground";
+import { BackgroundProvider } from "./context/BackgroundContext";
 
 function App() {
   // Pointer interactions: glass-card spotlight + 3D tilt, and magnetic buttons.
@@ -65,10 +68,12 @@ function App() {
   }, []);
 
   return (
+    <BackgroundProvider>
     <BrowserRouter>
       <div className="scroll-progress" aria-hidden="true" />
       <AuroraBackground />
       <ShaderAurora />
+      <InterestBackground />
 
       <nav className="navbar">
         <div className="container">
@@ -86,6 +91,9 @@ function App() {
               <NavLink to="/projects">Projects</NavLink>
             </li>
             <li>
+              <NavLink to="/interests">Interests</NavLink>
+            </li>
+            <li>
               <NavLink to="/contact">Contact</NavLink>
             </li>
             <li>
@@ -99,11 +107,13 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/projects" element={<Projects />} />
+          <Route path="/interests" element={<Interests />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>
     </BrowserRouter>
+    </BackgroundProvider>
   );
 }
 

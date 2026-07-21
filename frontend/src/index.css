@@ -122,6 +122,23 @@ body.webgl-on .aurora__blob {
   display: none;
 }
 
+/* Interest background layer — sits over the noir aurora, cross-fades */
+.interest-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s var(--ease);
+}
+.interest-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 /* Scroll-driven progress bar (modern CSS scroll timelines, no JS) */
 .scroll-progress {
   position: fixed;
@@ -621,6 +638,115 @@ main {
 }
 .card-links a:hover::after {
   transform: translateX(3px);
+}
+
+/* ==========================================================================
+   Interest flip cards
+   ========================================================================== */
+.interests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-top: 4px;
+  perspective: 1600px;
+}
+
+.interest-card {
+  position: relative;
+  height: 330px;
+  cursor: pointer;
+}
+.interest-card__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.7s var(--ease);
+}
+.interest-card:hover .interest-card__inner,
+.interest-card.is-flipped .interest-card__inner {
+  transform: rotateY(180deg);
+}
+
+.interest-card__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 26px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transition: border-color 0.4s var(--ease), box-shadow 0.4s var(--ease);
+}
+.interest-card__face::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(120% 80% at 50% 120%, var(--ac), transparent 62%);
+  opacity: 0.14;
+  pointer-events: none;
+}
+.interest-card__face::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--ac), transparent);
+  opacity: 0.85;
+}
+.interest-card__back {
+  transform: rotateY(180deg);
+}
+.interest-card:hover .interest-card__face,
+.interest-card.is-flipped .interest-card__face {
+  border-color: var(--ac);
+  box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.8);
+}
+
+.interest-card__tag {
+  position: relative;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ac);
+}
+.interest-card__spacer { flex: 1; }
+.interest-card__title {
+  position: relative;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.interest-card__blurb {
+  position: relative;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.interest-card__hint {
+  position: relative;
+  margin-top: 16px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.72rem;
+  color: var(--muted-dim);
+}
+.interest-card__desc {
+  position: relative;
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.7;
 }
 
 /* ==========================================================================
