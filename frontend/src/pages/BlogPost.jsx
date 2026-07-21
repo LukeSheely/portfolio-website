@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { fetchPost } from "../api";
+import Reveal from "../components/Reveal";
 
 function BlogPost() {
   const { slug } = useParams();
@@ -48,19 +49,23 @@ function BlogPost() {
       <Link to="/blog" style={{ fontSize: "0.9rem", marginBottom: 16, display: "inline-block" }}>
         &larr; Back to Blog
       </Link>
-      <h1 className="page-title">{post.title}</h1>
-      <p className="card-meta" style={{ marginBottom: 24 }}>
-        {formatDate(post.created_at)}
-        {post.updated_at !== post.created_at && (
-          <> &middot; Updated {formatDate(post.updated_at)}</>
-        )}
-      </p>
-      <div
-        className="card"
-        style={{ whiteSpace: "pre-wrap", lineHeight: 1.8 }}
-      >
-        {post.content}
-      </div>
+      <Reveal>
+        <h1 className="page-title">{post.title}</h1>
+        <p className="card-meta" style={{ marginBottom: 24 }}>
+          {formatDate(post.created_at)}
+          {post.updated_at !== post.created_at && (
+            <> &middot; Updated {formatDate(post.updated_at)}</>
+          )}
+        </p>
+      </Reveal>
+      <Reveal delay={80}>
+        <div
+          className="card"
+          style={{ whiteSpace: "pre-wrap", lineHeight: 1.85 }}
+        >
+          {post.content}
+        </div>
+      </Reveal>
     </div>
   );
 }

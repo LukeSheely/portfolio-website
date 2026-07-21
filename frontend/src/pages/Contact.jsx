@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { submitContact } from "../api";
+import Reveal from "../components/Reveal";
 
 function Contact() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
@@ -32,16 +33,19 @@ function Contact() {
 
   return (
     <div className="page">
-      <h1 className="page-title">Contact</h1>
-      <p className="page-subtitle">
-        Send me a message and I'll get back to you.
-      </p>
+      <Reveal>
+        <p className="eyebrow">say hello</p>
+        <h1 className="page-title">Contact</h1>
+        <p className="page-subtitle">
+          Send me a message and I'll get back to you.
+        </p>
+      </Reveal>
 
       {status && (
         <div className={`alert alert-${status.type}`}>{status.text}</div>
       )}
 
-      <form onSubmit={handleSubmit} className="card" style={{ maxWidth: 600 }}>
+      <Reveal delay={80} as="form" onSubmit={handleSubmit} className="card" style={{ maxWidth: 600 }}>
         <div className="form-group">
           <label htmlFor="name">Name</label>
           <input
@@ -77,9 +81,9 @@ function Contact() {
         <button type="submit" className="btn btn-primary" disabled={submitting}>
           {submitting ? "Sending..." : "Send Message"}
         </button>
-      </form>
+      </Reveal>
 
-      <div style={{ marginTop: 32, color: "var(--color-text-muted)", fontSize: "0.85rem" }}>
+      <div style={{ marginTop: 32, color: "var(--muted)", fontSize: "0.85rem" }}>
         <p>
           <strong>Tech Stack:</strong> This form saves your message to a
           PostgreSQL database (hosted on Supabase) with AWS S3 for image storage.
