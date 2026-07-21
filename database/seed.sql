@@ -172,6 +172,15 @@ INSERT INTO interests (title, tag, blurb, description, accent, theme, sort_order
     '#41b8e0',
     'wakesurf',
     3
+),
+(
+    'Geometry Dash',
+    'Wave · Spikes · Attempts',
+    'One more attempt.',
+    'Muscle-memory platforming to the beat — grinding wave corridors, memorizing spike timings, and chasing that one clean run. Nine Circles on loop.',
+    '#3be0ff',
+    'geometrydash',
+    4
 );
 
 -- Contact Messages (sample)

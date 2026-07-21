@@ -3,11 +3,13 @@ import { useBackground } from "../context/BackgroundContext";
 import Destiny2Background from "./interests/Destiny2Background";
 import OsuBackground from "./interests/OsuBackground";
 import WakesurfBackground from "./interests/WakesurfBackground";
+import GeometryDashBackground from "./interests/GeometryDashBackground";
 
 const MAP = {
   destiny2: Destiny2Background,
   osu: OsuBackground,
   wakesurf: WakesurfBackground,
+  geometrydash: GeometryDashBackground,
 };
 
 /**
