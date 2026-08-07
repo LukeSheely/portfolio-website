@@ -90,9 +90,13 @@ function App() {
             <li>
               <NavLink to="/projects">Projects</NavLink>
             </li>
+            {/* Interests tab hidden for now — page, route, and admin editing
+                are all kept. Uncomment to bring it back into the nav. */}
+            {/*
             <li>
               <NavLink to="/interests">Interests</NavLink>
             </li>
+            */}
             <li>
               <NavLink to="/contact">Contact</NavLink>
             </li>
