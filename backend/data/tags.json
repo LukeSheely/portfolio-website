@@ -1,0 +1,14 @@
+[
+  { "id": 1, "name": "Python" },
+  { "id": 2, "name": "Machine Learning" },
+  { "id": 3, "name": "PyTorch" },
+  { "id": 4, "name": "scikit-learn" },
+  { "id": 5, "name": "NumPy" },
+  { "id": 6, "name": "pandas" },
+  { "id": 7, "name": "C#" },
+  { "id": 8, "name": "Unity" },
+  { "id": 9, "name": "Git" },
+  { "id": 10, "name": "SciPy" },
+  { "id": 11, "name": "Matplotlib" },
+  { "id": 12, "name": "yfinance" }
+]

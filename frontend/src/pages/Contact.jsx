@@ -85,8 +85,8 @@ function Contact() {
 
       <div style={{ marginTop: 32, color: "var(--muted)", fontSize: "0.85rem" }}>
         <p>
-          <strong>Tech Stack:</strong> This form saves your message to a
-          PostgreSQL database (hosted on Supabase) with AWS S3 for image storage.
+          <strong>Tech Stack:</strong> This form emails me directly via AWS SES —
+          nothing is stored on the server. Project images are stored in AWS S3.
         </p>
       </div>
     </div>

@@ -11,13 +11,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# --- Database (PostgreSQL via AWS RDS or local) ---
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME", "portfolio")
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
-
 # --- AWS General ---
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 
@@ -41,3 +34,13 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
 
 # --- CORS ---
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
+# --- Data store (flat JSON files in backend/data/, committed via GitHub) ---
+# GITHUB_TOKEN should be a fine-grained personal access token scoped to just
+# GITHUB_REPO with "Contents: Read and write" permission. Without it, admin
+# writes fall back to a local file write only — fine for local dev, but
+# edits won't persist in production, since Vercel's serverless filesystem
+# is read-only there.
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
+GITHUB_REPO = os.getenv("GITHUB_REPO", "LukeSheely/portfolio-website")
+GITHUB_BRANCH = os.getenv("GITHUB_BRANCH", "main")

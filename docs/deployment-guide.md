@@ -1,156 +1,110 @@
 # Deployment Guide
 
-Complete guide to deploying your portfolio website using free-tier cloud services.
+Complete guide to deploying this portfolio website on Vercel.
 
 ---
 
 ## Architecture Overview
 
-- **Database:** Supabase (PostgreSQL) — Free tier with 500MB storage
-- **Backend:** Render (Flask API) — Free tier with auto-deploy from GitHub
-- **Frontend:** Netlify (React) — Free tier with CDN and auto-deploy from GitHub
+- **Backend:** Vercel (serverless Python / Flask) — deploys from `backend/`
+- **Frontend:** Vercel (static React build) — deploys from `frontend/`
+- **Content:** Flat JSON files in `backend/data/`, committed to this repo via the GitHub API when you edit something in the admin panel
 - **Storage:** AWS S3 (Images) — ~$0.50/month for storage
 
 Total cost: **~$0.50/month**
 
----
-
-## Step 1: Database Setup (Supabase)
-
-### Create Account and Project
-
-1. Go to [supabase.com](https://supabase.com)
-2. Sign up with GitHub (easiest)
-3. Click **"New Project"**
-4. Fill in:
-   - **Name:** `portfolio`
-   - **Database Password:** Choose a strong password (save it!)
-   - **Region:** Choose closest to you
-5. Click **"Create new project"** (takes 2-3 minutes)
-
-### Get Connection Details
-
-1. Go to **Settings** → **Database**
-2. Under **Connection string**, select **"Session mode"** or **"Connection pooling"**
-3. Copy the pooler host (e.g., `aws-0-us-west-2.pooler.supabase.com`)
-4. Note the port (usually `6543` for pooler)
-5. Your username format: `postgres.PROJECT_REF` (find PROJECT_REF in Settings)
-
-### Load Your Schema
-
-Use the Supabase SQL Editor:
-1. Click **SQL Editor** in the left sidebar
-2. Click **"New query"**
-3. Copy/paste your `database/schema.sql` content
-4. Click **"Run"**
-5. Repeat for your project data (or use the seed.sql)
+Two separate Vercel projects point at the same GitHub repo — one rooted at `backend/`, one at `frontend/` — so a single `git push` to `main` redeploys both.
 
 ---
 
-## Step 2: Backend Deployment (Render)
+## Step 1: Backend Deployment (Vercel)
 
-### Create Account
+### Create the Project
 
-1. Go to [render.com](https://render.com)
-2. Sign up with your GitHub account
-
-### Deploy Flask Backend
-
-1. Click **"New +"** → **"Web Service"**
-2. Connect your GitHub account if prompted
-3. Select your **portfolio-website** repository
+1. Go to [vercel.com](https://vercel.com) and sign in with GitHub
+2. Click **"Add New..."** → **"Project"**
+3. Import your **portfolio-website** repository
 4. Configure:
-   - **Name:** `portfolio-backend` (or your choice)
-   - **Region:** Choose closest to you
-   - **Branch:** `main`
    - **Root Directory:** `backend`
-   - **Runtime:** `Python 3`
-   - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `gunicorn app:app`
-   - **Instance Type:** `Free`
+   - Vercel will detect `backend/vercel.json` and use the Python runtime automatically
 
 ### Add Environment Variables
 
-Scroll down to **Environment Variables** and add each of these:
+In the project's **Settings** → **Environment Variables**, add each of these:
 
 | Key | Value |
 |-----|-------|
-| `DB_HOST` | Your Supabase pooler host (e.g., `aws-0-us-west-2.pooler.supabase.com`) |
-| `DB_PORT` | `6543` |
-| `DB_NAME` | `postgres` |
-| `DB_USER` | `postgres.YOUR_PROJECT_REF` |
-| `DB_PASSWORD` | Your Supabase database password |
-| `AWS_REGION` | `us-east-2` |
+| `AWS_REGION` | `us-east-2` (or your bucket's region) |
 | `S3_BUCKET` | `portfolio-images-lukesheely` (your bucket name) |
 | `USE_LOCAL_STORAGE` | `false` |
 | `AWS_ACCESS_KEY_ID` | Your AWS access key |
 | `AWS_SECRET_ACCESS_KEY` | Your AWS secret key |
-| `LOCAL_UPLOAD_DIR` | `uploads` |
-| `SES_SENDER_EMAIL` | `sheelyl2@wwu.edu` (verified in SES) |
-| `SES_RECIPIENT_EMAIL` | `sheelyl2@wwu.edu` |
+| `SES_SENDER_EMAIL` | Your verified SES email |
+| `SES_RECIPIENT_EMAIL` | Where contact form messages should go |
 | `USE_LOCAL_EMAIL` | `false` |
 | `ADMIN_PASSWORD` | Choose a strong password |
 | `SECRET_KEY` | Random string (e.g., generate with `openssl rand -hex 32`) |
+| `FRONTEND_URL` | Your frontend's Vercel URL (for CORS) |
+| `GITHUB_TOKEN` | A fine-grained PAT — see below |
+| `GITHUB_REPO` | `YOUR-USERNAME/portfolio-website` |
+| `GITHUB_BRANCH` | `main` |
+
+### Create the GitHub Token (`GITHUB_TOKEN`)
+
+This is what lets the admin panel commit edits back to `backend/data/*.json`:
+
+1. Go to **GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens**
+2. Click **"Generate new token"**
+3. **Repository access:** select only this repository
+4. **Permissions:** under **Repository permissions**, set **Contents** to **Read and write** (leave everything else as No access)
+5. Generate the token and paste it into the `GITHUB_TOKEN` env var above
+
+Scoping it to just this one repo means a leaked token can only ever touch this project.
 
 ### Deploy
 
-1. Click **"Create Web Service"**
-2. Render will build and deploy (takes 2-3 minutes)
-3. Once it shows **"Live"**, copy your backend URL (e.g., `https://portfolio-backend-abc123.onrender.com`)
+1. Click **"Deploy"**
+2. Once it's live, copy your backend URL (e.g., `https://your-backend.vercel.app`)
 
 ### Test the Backend
 
-Visit: `https://YOUR-RENDER-URL.onrender.com/api/projects`
+Visit: `https://YOUR-BACKEND-URL.vercel.app/api/projects`
 
 You should see your projects as JSON.
 
 ---
 
-## Step 3: Frontend Deployment (Netlify)
+## Step 2: Frontend Deployment (Vercel)
 
-### Create Account
+### Create the Project
 
-1. Go to [netlify.com](https://netlify.com)
-2. Sign up with your GitHub account
-
-### Deploy React Frontend
-
-1. Click **"Add new site"** → **"Import an existing project"**
-2. Choose **GitHub** and authorize Netlify
-3. Select your **portfolio-website** repository
-4. Configure:
-   - **Base directory:** `frontend`
-   - **Build command:** `npm run build`
-   - **Publish directory:** `frontend/dist`
+1. In Vercel, **"Add New..."** → **"Project"** again
+2. Import the same repository
+3. Configure:
+   - **Root Directory:** `frontend`
+   - **Framework Preset:** Vite (auto-detected)
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
 
 ### Add Environment Variable
 
-1. Before deploying, click **"Show advanced"** → **"New variable"**
-2. Add one variable:
-   - **Key:** `VITE_API_URL`
-   - **Value:** Your Render backend URL (e.g., `https://portfolio-backend-zkb1.onrender.com`)
+- **Key:** `VITE_API_URL`
+- **Value:** Your backend's Vercel URL from Step 1 (e.g., `https://your-backend.vercel.app`)
 
 ### Deploy
 
-1. Click **"Deploy site"**
-2. Netlify will build and deploy (takes 1-2 minutes)
-3. Once complete, you'll get a URL like `https://random-name-123.netlify.app`
-
-### Customize Domain (Optional)
-
-1. Go to **Site settings** → **Domain management**
-2. Click **"Options"** → **"Edit site name"**
-3. Change to a custom subdomain (e.g., `yourname.netlify.app`)
+1. Click **"Deploy"**
+2. Once complete, you'll get a URL like `https://your-name.vercel.app`
 
 ### Test the Frontend
 
-1. Visit your Netlify URL
+1. Visit your Vercel URL
 2. You should see your portfolio with all projects loaded
 3. Try the admin page, contact form, etc.
 
 ---
 
-## Step 4: AWS S3 Setup (Image Storage)
+## Step 3: AWS S3 Setup (Image Storage)
 
 ### Create S3 Bucket
 
@@ -194,7 +148,7 @@ You should see your projects as JSON.
         "AllowedHeaders": ["*"],
         "AllowedMethods": ["GET", "HEAD"],
         "AllowedOrigins": [
-            "https://yourname.netlify.app",
+            "https://your-name.vercel.app",
             "http://localhost:5173"
         ],
         "ExposeHeaders": [],
@@ -203,7 +157,7 @@ You should see your projects as JSON.
 ]
 ```
 
-3. Replace `yourname.netlify.app` with your actual Netlify domain
+3. Replace `your-name.vercel.app` with your actual frontend domain
 4. Click **"Save changes"**
 
 ### Create IAM User
@@ -216,20 +170,20 @@ You should see your projects as JSON.
 6. Choose **"Application running outside AWS"**
 7. Copy the **Access key ID** and **Secret access key**
 
-### Update Render Environment Variables
+### Update Backend Environment Variables
 
-Go back to Render and add these variables:
+Go back to the backend's Vercel project settings and set:
 - `AWS_ACCESS_KEY_ID`: Your access key
 - `AWS_SECRET_ACCESS_KEY`: Your secret key
-- Update `AWS_REGION` to match your bucket region (e.g., `us-east-2`)
-- Update `S3_BUCKET` to your bucket name
-- Change `USE_LOCAL_STORAGE` to `false`
+- `AWS_REGION` to match your bucket region (e.g., `us-east-2`)
+- `S3_BUCKET` to your bucket name
+- `USE_LOCAL_STORAGE` to `false`
 
-Render will automatically redeploy with the new settings.
+Vercel will automatically redeploy with the new settings.
 
 ---
 
-## Step 5: AWS SES Setup (Email Notifications)
+## Step 4: AWS SES Setup (Email Notifications)
 
 ### Verify Your Email
 
@@ -237,7 +191,7 @@ Render will automatically redeploy with the new settings.
 2. Make sure you're in **us-east-1** region (top-right dropdown)
 3. Click **"Verified identities"** → **"Create identity"**
 4. Choose **"Email address"**
-5. Enter your email (e.g., `sheelyl2@wwu.edu`)
+5. Enter your email
 6. Click **"Create identity"**
 7. Check your email and click the verification link
 
@@ -249,42 +203,41 @@ Render will automatically redeploy with the new settings.
 4. Search for **"AmazonSESFullAccess"**
 5. Check the box and click **"Add permissions"**
 
-### Update Render Environment Variables
+### Update Backend Environment Variables
 
-1. Go back to Render → Environment
+1. Go back to the backend's Vercel project → Environment Variables
 2. Update:
    - `USE_LOCAL_EMAIL` = `false`
    - `SES_SENDER_EMAIL` = Your verified email
    - `SES_RECIPIENT_EMAIL` = Your verified email
-3. Save changes (Render will redeploy)
+3. Save changes (Vercel will redeploy)
 
 ### Test
 
 1. Go to your live site's contact page
 2. Submit a test message
-3. Check your email for the notification!
+3. Check your email for the notification! (Contact messages are only ever emailed — they're never stored on the site.)
 
 ---
 
-## Step 6: Update README with Live URLs
+## Step 5: Update README with Live URLs
 
-Go back and update your `README.md` with the live URLs:
+Go back and update your `README.md` with the live URL:
 
 ```markdown
 ## Live Demo
 
-🌐 **[View Live Site](https://yourname.netlify.app)**
-🔧 **Backend API:** https://portfolio-backend-abc123.onrender.com
+🌐 **[View Live Site](https://your-name.vercel.app)**
 ```
 
 Commit and push:
 ```bash
 git add README.md
-git commit -m "Add live deployment URLs"
+git commit -m "Add live deployment URL"
 git push origin main
 ```
 
-Both Render and Netlify will auto-redeploy when you push to GitHub.
+Both Vercel projects will auto-redeploy when you push to GitHub.
 
 ---
 
@@ -292,33 +245,34 @@ Both Render and Netlify will auto-redeploy when you push to GitHub.
 
 ### Backend Issues
 
-**"Application failed to respond"**
-- Check Render logs (click "Logs" tab)
+**"Internal Server Error"**
+- Check the backend's Vercel deployment logs (Vercel dashboard → your backend project → Deployments → latest → Logs)
 - Verify environment variables are set correctly
-- Make sure Supabase credentials are correct
 
-**Database connection errors**
-- Verify `DB_USER` format: `postgres.PROJECT_REF`
-- Check that you're using the pooler host, not the direct host
-- Ensure port is `6543` for pooler
+**Admin edits aren't showing up on the live site**
+- This is expected for roughly 30-60 seconds — edits commit to GitHub, then Vercel auto-deploys from that commit. Check the repo's commit history to confirm the commit landed, and the backend project's Deployments tab to see the redeploy in progress.
+- If nothing ever lands: verify `GITHUB_TOKEN` is set, hasn't expired, and is scoped with **Contents: Read and write** on this repo.
+
+**Admin panel shows an error when saving**
+- The save failed — most commonly a missing/invalid `GITHUB_TOKEN`, or `GITHUB_REPO` not matching `owner/repo` exactly. The error message returned to the admin panel includes the underlying reason.
 
 ### Frontend Issues
 
 **"Failed to fetch" or CORS errors**
-- Verify `VITE_API_URL` is set correctly in Netlify
+- Verify `VITE_API_URL` is set correctly in the frontend's Vercel project
 - Make sure the backend is live and responding
-- Check that Flask has CORS enabled (it should via flask-cors)
+- Check that Flask has CORS enabled (it should via flask-cors) and `FRONTEND_URL` on the backend matches your frontend's actual domain
 
 **Images not loading from S3**
 - Verify S3 bucket policy allows public GetObject
-- Check CORS configuration includes your Netlify domain
-- Ensure AWS_REGION matches your bucket's actual region
-- Test S3 URL directly in browser
+- Check CORS configuration includes your Vercel domain
+- Ensure `AWS_REGION` matches your bucket's actual region
+- Test the S3 URL directly in browser
 
 **Projects not loading**
 - Open browser console to see error messages
-- Verify API URL in Network tab
-- Test backend API directly in a new tab
+- Verify the API URL in the Network tab
+- Test the backend API directly in a new tab
 
 ---
 
@@ -326,42 +280,29 @@ Both Render and Netlify will auto-redeploy when you push to GitHub.
 
 ### Auto-Deployment
 
-Both Render and Netlify automatically redeploy when you push to GitHub `main` branch.
+Both Vercel projects automatically redeploy when you push to GitHub `main` — including the commits the admin panel makes on your behalf when you edit content.
 
 ### Free Tier Limits
 
-- **Supabase:** 500MB database, unlimited API requests
-- **Render:** Free tier apps sleep after 15 minutes of inactivity (first request after sleep takes ~30 seconds)
-- **Netlify:** 100GB bandwidth/month, 300 build minutes/month
+- **Vercel:** Generous free tier for personal projects on both static hosting and serverless functions
 - **AWS S3:** ~$0.50/month for typical portfolio image storage
+- **GitHub API:** Admin edits use a handful of API calls per save — nowhere close to rate limits at personal-portfolio scale
 
 ### Updating Your Portfolio
 
-1. Make changes locally
-2. Test with `npm run dev` (frontend) and `python app.py` (backend)
-3. Commit and push to GitHub
-4. Render and Vercel auto-deploy within 2-3 minutes
+- **Content (projects, interests, posts):** Edit through the admin panel — it commits directly, no local git steps needed.
+- **Code / design:** Make changes locally, test with `npm run dev` (frontend) and `python app.py` (backend), then commit and push to GitHub as usual. Vercel auto-deploys within a minute or two.
 
 ---
 
 ## Optional: Custom Domain
 
-### Netlify Custom Domain (Free)
-
-1. Go to Netlify site settings → **Domain management**
-2. Click **"Add custom domain"**
-3. Enter your domain
-4. Update DNS records as instructed by Netlify
-5. SSL certificate is automatically provisioned
-
-### Render Custom Domain (Free)
-
-1. Go to Render service settings → **Custom Domains**
-2. Add your backend domain (e.g., `api.yourdomain.com`)
-3. Update DNS CNAME record
+1. Go to either Vercel project → **Settings** → **Domains**
+2. Add your domain
+3. Update DNS records as instructed by Vercel
 4. SSL certificate is automatically provisioned
 
-Then update `VITE_API_URL` in Netlify to point to your custom backend domain.
+Do this for the frontend project for your main domain, and (optionally) the backend project for something like `api.yourdomain.com`. If you use a custom backend domain, update `VITE_API_URL` on the frontend to match.
 
 ---
 

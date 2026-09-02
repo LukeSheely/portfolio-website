@@ -4,9 +4,9 @@ This guide documents the AWS services integrated with your portfolio website.
 
 ## Current Architecture
 
-✅ **Database:** Supabase (free PostgreSQL)
-✅ **Backend:** Render (free Flask hosting)
-✅ **Frontend:** Netlify (free React hosting)
+✅ **Content:** Flat JSON files, committed to the repo via the GitHub API (see `database/README.md`)
+✅ **Backend:** Vercel (serverless Flask hosting)
+✅ **Frontend:** Vercel (React hosting)
 ✅ **Storage:** AWS S3 (us-east-2) — ~$0.50/month
 
 ## AWS Services
@@ -70,7 +70,7 @@ Both S3 and SES are currently deployed and working in production.
         "AllowedHeaders": ["*"],
         "AllowedMethods": ["GET", "HEAD"],
         "AllowedOrigins": [
-            "https://lukesheely.netlify.app",
+            "https://lukesheely.vercel.app",
             "http://localhost:5173"
         ],
         "ExposeHeaders": [],
@@ -80,7 +80,7 @@ Both S3 and SES are currently deployed and working in production.
 ```
 
 5. Created IAM user `portfolio-app` with S3 access
-6. Generated access keys and added to Render environment variables
+6. Generated access keys and added to the backend's Vercel environment variables
 
 ### Environment Variables (Production)
 

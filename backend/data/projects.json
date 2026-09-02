@@ -1,0 +1,70 @@
+[
+  {
+    "id": 4,
+    "title": "MacroTracker",
+    "description": "MacroTracker is a mobile-first web app for tracking daily calories and protein intake. It features circular progress rings, automatic daily resets at midnight, a quick-add system that learns your frequent foods, weight tracking with trend charts, and a 14-day history view with rolling averages. Built with React 18, Vite, Tailwind CSS, and Recharts, the entire app runs client-side with localStorage \u2014 no accounts or servers required. Deployed on Vercel.",
+    "tech_stack": "React, Vite, Tailwind CSS, Recharts",
+    "live_url": "https://macro-tracker-psi.vercel.app/",
+    "github_url": "https://github.com/LukeSheely/macro-tracker",
+    "image_url": null,
+    "featured": false,
+    "sort_order": 1,
+    "created_at": "2026-02-26T19:45:13",
+    "tag_ids": []
+  },
+  {
+    "id": 1,
+    "title": "Beer Predictor",
+    "description": "A beer-style classification system using a Random Forest model, achieving a 231% performance increase over a majority-class baseline. Designed an end-to-end ML pipeline for sparse, high-dimensional ingredient data using SciPy CSR matrices and scikit-learn, optimizing memory efficiency and training time.",
+    "tech_stack": "Python, scikit-learn, PyTorch, SciPy, NumPy",
+    "live_url": null,
+    "github_url": "https://github.com/LukeSheely",
+    "image_url": "https://portfolio-images-lukesheely.s3.us-east-2.amazonaws.com/478008e230974d84bb06a713a8cf446f.png",
+    "featured": true,
+    "sort_order": 2,
+    "created_at": "2026-02-11T01:19:00",
+    "tag_ids": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  },
+  {
+    "id": 2,
+    "title": "Stock Price Predictor",
+    "description": "A stock price prediction AI model that automates data ingestion, preprocessing, and forecasting using Machine Learning frameworks and the Yahoo Finance API. Enhanced model performance by up to 70% through learning rate tuning and training dataset optimization. Features data-driven visualizations with Matplotlib.",
+    "tech_stack": "Python, PyTorch, NumPy, pandas, Matplotlib, yfinance, scikit-learn",
+    "live_url": null,
+    "github_url": "https://github.com/LukeSheely",
+    "image_url": "https://portfolio-images-lukesheely.s3.us-east-2.amazonaws.com/c7e307734707469d81f1b4093c76a648.png",
+    "featured": true,
+    "sort_order": 3,
+    "created_at": "2026-02-11T01:19:00",
+    "tag_ids": [
+      1,
+      2,
+      3,
+      5,
+      6
+    ]
+  },
+  {
+    "id": 3,
+    "title": "Polygon Party",
+    "description": "A cooperative 2D puzzle platformer developed from concept to release using Unity and C#. Features custom physics and collision detection tailored to game mechanics. Led a team using Git for version control, ensuring smooth collaboration and code integration.",
+    "tech_stack": "C#, Unity, Git",
+    "live_url": null,
+    "github_url": "https://github.com/LukeSheely",
+    "image_url": "https://portfolio-images-lukesheely.s3.us-east-2.amazonaws.com/c57c6a79456d44818ab7224fdedd7194.png",
+    "featured": true,
+    "sort_order": 4,
+    "created_at": "2026-02-11T01:19:00",
+    "tag_ids": [
+      7,
+      8,
+      9
+    ]
+  }
+]
