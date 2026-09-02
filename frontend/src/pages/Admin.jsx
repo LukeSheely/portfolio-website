@@ -10,14 +10,26 @@ import {
   adminCreatePost,
   adminUpdatePost,
   adminDeletePost,
-  adminFetchMessages,
-  adminDeleteMessage,
   adminUploadImage,
   adminFetchInterests,
   adminCreateInterest,
   adminUpdateInterest,
   adminDeleteInterest,
 } from "../api";
+
+// Shown after every save. Edits commit straight to GitHub and Vercel
+// auto-deploys from there, so there's a real (if short) gap between "saved"
+// and "visitors can see it" — worth being upfront about in the UI.
+const DEPLOY_HINT = "Saved — committing to GitHub now. Live on the site in about a minute.";
+
+function SaveNotice({ notice }) {
+  if (!notice) return null;
+  return (
+    <div className={`alert alert-${notice.type}`} style={{ marginBottom: 16 }}>
+      {notice.text}
+    </div>
+  );
+}
 
 function Admin() {
   const [token, setToken] = useState(null);
@@ -71,7 +83,7 @@ function Admin() {
       </div>
 
       <div className="admin-tabs">
-        {["projects", "interests", "posts", "messages"].map((t) => (
+        {["projects", "interests", "posts"].map((t) => (
           <button
             key={t}
             className={`admin-tab ${tab === t ? "active" : ""}`}
@@ -85,7 +97,6 @@ function Admin() {
       {tab === "projects" && <ProjectsAdmin token={token} />}
       {tab === "interests" && <InterestsAdmin token={token} />}
       {tab === "posts" && <PostsAdmin token={token} />}
-      {tab === "messages" && <MessagesAdmin token={token} />}
     </div>
   );
 }
@@ -105,12 +116,11 @@ function ProjectsAdmin({ token }) {
   const dragIdRef = React.useRef(null);
   const [orderChanged, setOrderChanged] = useState(false);
   const [expandedSkills, setExpandedSkills] = useState({});
+  const [notice, setNotice] = useState(null);
 
-  const load = () => adminFetchProjects(token).then((data) => {
-    setProjects(data);
-    setOrderChanged(false);
-  });
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    adminFetchProjects(token).then((data) => setProjects(Array.isArray(data) ? data : []));
+  }, []);
 
   const resetForm = () => {
     setForm({
@@ -122,13 +132,19 @@ function ProjectsAdmin({ token }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editing) {
-      await adminUpdateProject(token, editing, form);
-    } else {
-      await adminCreateProject(token, form);
+    try {
+      if (editing) {
+        const updated = await adminUpdateProject(token, editing, form);
+        setProjects((prev) => prev.map((p) => (p.id === editing ? updated : p)));
+      } else {
+        const created = await adminCreateProject(token, form);
+        setProjects((prev) => [...prev, created]);
+      }
+      setNotice({ type: "success", text: DEPLOY_HINT });
+      resetForm();
+    } catch (err) {
+      setNotice({ type: "error", text: err.message });
     }
-    resetForm();
-    load();
   };
 
   const handleEdit = (project) => {
@@ -145,9 +161,14 @@ function ProjectsAdmin({ token }) {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Delete this project?")) {
+    if (!window.confirm("Delete this project?")) return;
+    try {
       await adminDeleteProject(token, id);
-      load();
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+      setNotice({ type: "success", text: DEPLOY_HINT });
+      if (editing === id) resetForm();
+    } catch (err) {
+      setNotice({ type: "error", text: err.message });
     }
   };
 
@@ -196,8 +217,13 @@ function ProjectsAdmin({ token }) {
   };
 
   const handleSaveOrder = async () => {
-    await adminReorderProjects(token, projects.map((p) => p.id));
-    setOrderChanged(false);
+    try {
+      await adminReorderProjects(token, projects.map((p) => p.id));
+      setOrderChanged(false);
+      setNotice({ type: "success", text: DEPLOY_HINT });
+    } catch (err) {
+      setNotice({ type: "error", text: err.message });
+    }
   };
 
   const toggleSkills = (id) => {
@@ -206,6 +232,8 @@ function ProjectsAdmin({ token }) {
 
   return (
     <div>
+      <SaveNotice notice={notice} />
+
       <form onSubmit={handleSubmit} className="card">
         <h3 style={{ marginBottom: 16 }}>{editing ? "Edit Project" : "Add Project"}</h3>
         <div className="form-group">
@@ -218,7 +246,7 @@ function ProjectsAdmin({ token }) {
         </div>
         <div className="form-group">
           <label>Tech Stack</label>
-          <input value={form.tech_stack} onChange={(e) => setForm({ ...form, tech_stack: e.target.value })} placeholder="e.g. Python, Flask, PostgreSQL" />
+          <input value={form.tech_stack} onChange={(e) => setForm({ ...form, tech_stack: e.target.value })} placeholder="e.g. React, Flask, AWS S3" />
         </div>
         <div className="form-group">
           <label>Live URL</label>
@@ -320,9 +348,11 @@ function PostsAdmin({ token }) {
   const [form, setForm] = useState({
     title: "", content: "", slug: "", published: false,
   });
+  const [notice, setNotice] = useState(null);
 
-  const load = () => adminFetchPosts(token).then(setPosts);
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    adminFetchPosts(token).then((data) => setPosts(Array.isArray(data) ? data : []));
+  }, []);
 
   const resetForm = () => {
     setForm({ title: "", content: "", slug: "", published: false });
@@ -331,13 +361,19 @@ function PostsAdmin({ token }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editing) {
-      await adminUpdatePost(token, editing, form);
-    } else {
-      await adminCreatePost(token, form);
+    try {
+      if (editing) {
+        const updated = await adminUpdatePost(token, editing, form);
+        setPosts((prev) => prev.map((p) => (p.id === editing ? updated : p)));
+      } else {
+        const created = await adminCreatePost(token, form);
+        setPosts((prev) => [created, ...prev]);
+      }
+      setNotice({ type: "success", text: DEPLOY_HINT });
+      resetForm();
+    } catch (err) {
+      setNotice({ type: "error", text: err.message });
     }
-    resetForm();
-    load();
   };
 
   const handleEdit = (post) => {
@@ -351,14 +387,21 @@ function PostsAdmin({ token }) {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Delete this post?")) {
+    if (!window.confirm("Delete this post?")) return;
+    try {
       await adminDeletePost(token, id);
-      load();
+      setPosts((prev) => prev.filter((p) => p.id !== id));
+      setNotice({ type: "success", text: DEPLOY_HINT });
+      if (editing === id) resetForm();
+    } catch (err) {
+      setNotice({ type: "error", text: err.message });
     }
   };
 
   return (
     <div>
+      <SaveNotice notice={notice} />
+
       <form onSubmit={handleSubmit} className="card">
         <h3 style={{ marginBottom: 16 }}>{editing ? "Edit Post" : "Add Post"}</h3>
         <div className="form-group">
@@ -420,15 +463,21 @@ const EMPTY_INTEREST = {
   accent: "#6fe7c1", theme: "none", sort_order: 0,
 };
 
+function sortInterests(list) {
+  return [...list].sort((a, b) => (a.sort_order - b.sort_order) || (a.id - b.id));
+}
+
 function InterestsAdmin({ token }) {
   const [interests, setInterests] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_INTEREST);
+  const [notice, setNotice] = useState(null);
 
-  const load = () => adminFetchInterests(token).then((data) =>
-    setInterests(Array.isArray(data) ? data : [])
-  );
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    adminFetchInterests(token).then((data) =>
+      setInterests(sortInterests(Array.isArray(data) ? data : []))
+    );
+  }, []);
 
   const resetForm = () => {
     setForm(EMPTY_INTEREST);
@@ -437,13 +486,19 @@ function InterestsAdmin({ token }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editing) {
-      await adminUpdateInterest(token, editing, form);
-    } else {
-      await adminCreateInterest(token, form);
+    try {
+      if (editing) {
+        const updated = await adminUpdateInterest(token, editing, form);
+        setInterests((prev) => sortInterests(prev.map((i) => (i.id === editing ? updated : i))));
+      } else {
+        const created = await adminCreateInterest(token, form);
+        setInterests((prev) => sortInterests([...prev, created]));
+      }
+      setNotice({ type: "success", text: DEPLOY_HINT });
+      resetForm();
+    } catch (err) {
+      setNotice({ type: "error", text: err.message });
     }
-    resetForm();
-    load();
   };
 
   const handleEdit = (it) => {
@@ -460,10 +515,14 @@ function InterestsAdmin({ token }) {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Delete this interest?")) {
+    if (!window.confirm("Delete this interest?")) return;
+    try {
       await adminDeleteInterest(token, id);
+      setInterests((prev) => prev.filter((i) => i.id !== id));
+      setNotice({ type: "success", text: DEPLOY_HINT });
       if (editing === id) resetForm();
-      load();
+    } catch (err) {
+      setNotice({ type: "error", text: err.message });
     }
   };
 
@@ -471,6 +530,8 @@ function InterestsAdmin({ token }) {
 
   return (
     <div>
+      <SaveNotice notice={notice} />
+
       <form onSubmit={handleSubmit} className="card">
         <h3 style={{ marginBottom: 16 }}>{editing ? "Edit Interest" : "Add Interest"}</h3>
         <div className="form-group">
@@ -515,10 +576,7 @@ function InterestsAdmin({ token }) {
 
       <h3 style={{ margin: "24px 0 12px" }}>All Interests</h3>
       {interests.length === 0 && (
-        <p className="card-meta">
-          No interests found. If this is unexpected, run the database migration
-          (database/add_interests.sql) to create and seed the table.
-        </p>
+        <p className="card-meta">No interests yet — add one above.</p>
       )}
       {interests.map((it) => (
         <div className="card" key={it.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
@@ -531,49 +589,6 @@ function InterestsAdmin({ token }) {
             <button className="btn btn-small btn-primary" onClick={() => handleEdit(it)}>Edit</button>
             <button className="btn btn-small btn-danger" onClick={() => handleDelete(it.id)}>Delete</button>
           </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Messages Tab
-// ---------------------------------------------------------------------------
-
-function MessagesAdmin({ token }) {
-  const [messages, setMessages] = useState([]);
-
-  const load = () => adminFetchMessages(token).then(setMessages);
-  useEffect(() => { load(); }, []);
-
-  const handleDelete = async (id) => {
-    if (window.confirm("Delete this message?")) {
-      await adminDeleteMessage(token, id);
-      load();
-    }
-  };
-
-  const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
-    });
-  };
-
-  return (
-    <div>
-      <h3 style={{ marginBottom: 12 }}>Contact Messages</h3>
-      {messages.length === 0 && <p className="card-meta">No messages yet.</p>}
-      {messages.map((m) => (
-        <div className="card" key={m.id}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
-            <div>
-              <strong>{m.name}</strong> &lt;{m.email}&gt;
-              <p className="card-meta">{formatDate(m.created_at)}</p>
-            </div>
-            <button className="btn btn-small btn-danger" onClick={() => handleDelete(m.id)}>Delete</button>
-          </div>
-          <p style={{ marginTop: 8 }}>{m.message}</p>
         </div>
       ))}
     </div>

@@ -1,11 +1,11 @@
 """
 Blog post routes — Public API endpoints for blog posts.
 
-All queries use raw SQL via psycopg2 to demonstrate SQL skills.
+Reads from the flat-file JSON store (backend/data/posts.json).
 """
 
 from flask import Blueprint, jsonify
-from db import get_db
+import datastore
 
 posts_bp = Blueprint("posts", __name__)
 
@@ -15,44 +15,23 @@ def get_posts():
     """
     GET /api/posts
 
-    Demonstrates: Basic SELECT with WHERE clause
-    Purpose: Fetch all published blog posts for the public blog page.
-    Only published posts are returned (drafts are hidden).
+    Published posts only (drafts are hidden), newest first.
     """
-    with get_db() as (conn, cur):
-        # -- Demonstrates: SELECT + WHERE + ORDER BY
-        # -- Purpose: Fetch published posts, newest first
-        cur.execute("""
-            SELECT id, title, slug, created_at, updated_at
-            FROM posts
-            WHERE published = TRUE
-            ORDER BY created_at DESC
-        """)
+    posts = datastore.load("posts")
+    published = [p for p in posts if p.get("published")]
+    published.sort(key=lambda p: p.get("created_at", ""), reverse=True)
 
-        posts = cur.fetchall()
-
-    return jsonify(posts)
+    result = [{k: v for k, v in p.items() if k != "content"} for p in published]
+    return jsonify(result)
 
 
 @posts_bp.route("/api/posts/<slug>", methods=["GET"])
 def get_post(slug):
-    """
-    GET /api/posts/:slug
-
-    Demonstrates: Parameterized query for SQL injection prevention.
-    The slug comes from the URL, so it's user input that must be sanitized.
-    Using %s placeholder ensures psycopg2 escapes the value safely.
-    """
-    with get_db() as (conn, cur):
-        # -- Demonstrates: Parameterized query (SQL injection prevention)
-        # -- Purpose: Safely fetch a single post by its URL slug
-        cur.execute("""
-            SELECT id, title, content, slug, published, created_at, updated_at
-            FROM posts
-            WHERE slug = %s AND published = TRUE
-        """, (slug,))
-
-        post = cur.fetchone()
+    """GET /api/posts/:slug — a single published post."""
+    posts = datastore.load("posts")
+    post = next(
+        (p for p in posts if p.get("slug") == slug and p.get("published")), None
+    )
 
     if not post:
         return jsonify({"error": "Post not found"}), 404

@@ -1,12 +1,13 @@
 """
 Contact form route — Handles contact form submissions.
 
-Stores the message in the database AND sends an email notification
-via AWS SES (or logs it locally in development).
+Sends an email notification via AWS SES (or logs it locally in dev).
+Messages are not stored anywhere on the site — the email itself is the
+only record, so a failed send is reported as an error rather than
+silently swallowed.
 """
 
 from flask import Blueprint, jsonify, request
-from db import get_db
 from extensions import limiter
 from services.email import send_contact_email
 
@@ -23,8 +24,6 @@ def submit_contact():
     """
     POST /api/contact
     Body: { "name": "...", "email": "...", "message": "..." }
-
-    Demonstrates: INSERT with parameterized values + AWS SES integration
     """
     data = request.get_json()
 
@@ -46,27 +45,16 @@ def submit_contact():
     if len(message) > _MAX_MESSAGE:
         return jsonify({"error": f"Message must be {_MAX_MESSAGE} characters or fewer"}), 400
 
-    # Store the message in the database
-    with get_db() as (conn, cur):
-        # -- Demonstrates: INSERT with RETURNING
-        # -- Purpose: Save a contact form submission to the database
-        cur.execute("""
-            INSERT INTO contact_messages (name, email, message)
-            VALUES (%s, %s, %s)
-            RETURNING id, created_at
-        """, (name, email, message))
-
-        result = cur.fetchone()
-
-    # Send email notification via SES (or log it locally)
+    # Email is the only place this message is recorded now, so a failed
+    # send has to be a real error — not a message that quietly vanishes.
     try:
         send_contact_email(name, email, message)
     except Exception as e:
-        # Don't fail the request if email sending fails —
-        # the message is already saved in the database
         print(f"Warning: Failed to send email notification: {e}")
+        return jsonify({
+            "error": "Sorry, something went wrong sending your message. Please try again in a moment."
+        }), 502
 
     return jsonify({
         "message": "Thank you! Your message has been received.",
-        "id": result["id"],
     }), 201

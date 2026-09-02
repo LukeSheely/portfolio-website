@@ -1,8 +1,15 @@
 """
-Admin routes — Protected endpoints for managing projects, posts, and messages.
+Admin routes — Protected endpoints for managing projects, posts, and
+interests.
 
 Uses session tokens for auth: login issues a short-lived random token,
 which the frontend sends as a Bearer token on subsequent requests.
+
+Reads and writes flat-file JSON collections (backend/data/*.json) via the
+datastore module. See datastore.py for how a save reaches GitHub so it
+survives Vercel's read-only serverless filesystem and ships on the next
+auto-deploy — in production, an edit here typically takes 30-60 seconds to
+go live after this endpoint returns.
 """
 
 import hmac
@@ -11,7 +18,7 @@ import secrets
 import time
 from functools import wraps
 from flask import Blueprint, jsonify, request
-from db import get_db
+import datastore
 from extensions import limiter
 from services.s3 import upload_file
 import config
@@ -59,6 +66,17 @@ def require_admin(f):
     return decorated
 
 
+def _save_or_502(name, data):
+    """Persist a collection, turning a save failure into a clean 502 rather
+    than an unhandled 500 — most commonly a missing/invalid GITHUB_TOKEN in
+    production, or a GitHub API error."""
+    try:
+        datastore.save(name, data)
+        return None
+    except Exception as e:
+        return jsonify({"error": f"Failed to save: {e}"}), 502
+
+
 # ---------------------------------------------------------------------------
 # Login — verify the admin password and issue a session token
 # ---------------------------------------------------------------------------
@@ -89,14 +107,8 @@ def admin_login():
 @require_admin
 def list_projects():
     """GET /api/admin/projects — List all projects (including non-featured)."""
-    with get_db() as (conn, cur):
-        cur.execute("""
-            SELECT id, title, description, tech_stack,
-                   live_url, github_url, image_url, featured, sort_order, created_at
-            FROM projects
-            ORDER BY sort_order ASC
-        """)
-        projects = cur.fetchall()
+    projects = datastore.load("projects")
+    projects.sort(key=lambda p: p.get("sort_order", 0))
     return jsonify(projects)
 
 
@@ -106,43 +118,31 @@ def create_project():
     """
     POST /api/admin/projects
     Body: { "title": "...", "description": "...", "tech_stack": "...", ... }
-
-    Demonstrates: INSERT with RETURNING + transaction for related data
     """
     data = request.get_json()
     if not data or not data.get("title"):
         return jsonify({"error": "Title is required"}), 400
 
-    with get_db() as (conn, cur):
-        # -- Demonstrates: INSERT with RETURNING
-        # -- Purpose: Create a new portfolio project
-        cur.execute("SELECT COALESCE(MAX(sort_order), 0) + 1 AS next_order FROM projects")
-        next_order = cur.fetchone()["next_order"]
+    projects = datastore.load("projects")
+    next_order = max((p.get("sort_order", 0) for p in projects), default=0) + 1
 
-        cur.execute("""
-            INSERT INTO projects (title, description, tech_stack, live_url, github_url, image_url, featured, sort_order)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING id, title, created_at
-        """, (
-            data["title"],
-            data.get("description", ""),
-            data.get("tech_stack", ""),
-            data.get("live_url"),
-            data.get("github_url"),
-            data.get("image_url"),
-            data.get("featured", False),
-            next_order,
-        ))
-        project = cur.fetchone()
+    project = {
+        "id": datastore.next_id(projects),
+        "title": data["title"],
+        "description": data.get("description", ""),
+        "tech_stack": data.get("tech_stack", ""),
+        "live_url": data.get("live_url") or None,
+        "github_url": data.get("github_url") or None,
+        "image_url": data.get("image_url") or None,
+        "featured": bool(data.get("featured", False)),
+        "sort_order": next_order,
+        "created_at": datastore.now_iso(),
+        "tag_ids": data.get("tag_ids", []),
+    }
+    projects.append(project)
 
-        # If tags were provided, link them to the project
-        tag_ids = data.get("tag_ids", [])
-        for tag_id in tag_ids:
-            # -- Demonstrates: INSERT into junction table (many-to-many)
-            cur.execute("""
-                INSERT INTO project_tags (project_id, tag_id)
-                VALUES (%s, %s)
-            """, (project["id"], tag_id))
+    if err := _save_or_502("projects", projects):
+        return err
 
     return jsonify(project), 201
 
@@ -150,43 +150,30 @@ def create_project():
 @admin_bp.route("/api/admin/projects/<int:project_id>", methods=["PUT"])
 @require_admin
 def update_project(project_id):
-    """
-    PUT /api/admin/projects/:id
-
-    Demonstrates: UPDATE with WHERE + RETURNING
-    """
+    """PUT /api/admin/projects/:id — Edit an existing project."""
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    with get_db() as (conn, cur):
-        # -- Demonstrates: UPDATE with RETURNING
-        # -- Purpose: Edit an existing portfolio project
-        cur.execute("""
-            UPDATE projects
-            SET title = %s,
-                description = %s,
-                tech_stack = %s,
-                live_url = %s,
-                github_url = %s,
-                image_url = %s,
-                featured = %s
-            WHERE id = %s
-            RETURNING id, title, created_at
-        """, (
-            data.get("title", ""),
-            data.get("description", ""),
-            data.get("tech_stack", ""),
-            data.get("live_url"),
-            data.get("github_url"),
-            data.get("image_url"),
-            data.get("featured", False),
-            project_id,
-        ))
-        project = cur.fetchone()
-
+    projects = datastore.load("projects")
+    project = next((p for p in projects if p["id"] == project_id), None)
     if not project:
         return jsonify({"error": "Project not found"}), 404
+
+    project.update({
+        "title": data.get("title", ""),
+        "description": data.get("description", ""),
+        "tech_stack": data.get("tech_stack", ""),
+        "live_url": data.get("live_url") or None,
+        "github_url": data.get("github_url") or None,
+        "image_url": data.get("image_url") or None,
+        "featured": bool(data.get("featured", False)),
+    })
+    if "tag_ids" in data:
+        project["tag_ids"] = data["tag_ids"]
+
+    if err := _save_or_502("projects", projects):
+        return err
 
     return jsonify(project)
 
@@ -195,12 +182,13 @@ def update_project(project_id):
 @require_admin
 def delete_project(project_id):
     """DELETE /api/admin/projects/:id — Delete a project."""
-    with get_db() as (conn, cur):
-        cur.execute("DELETE FROM projects WHERE id = %s RETURNING id", (project_id,))
-        deleted = cur.fetchone()
-
-    if not deleted:
+    projects = datastore.load("projects")
+    remaining = [p for p in projects if p["id"] != project_id]
+    if len(remaining) == len(projects):
         return jsonify({"error": "Project not found"}), 404
+
+    if err := _save_or_502("projects", remaining):
+        return err
 
     return jsonify({"message": "Project deleted"})
 
@@ -219,12 +207,14 @@ def reorder_projects():
     if not ordered_ids:
         return jsonify({"error": "No order provided"}), 400
 
-    with get_db() as (conn, cur):
-        for position, project_id in enumerate(ordered_ids, start=1):
-            cur.execute(
-                "UPDATE projects SET sort_order = %s WHERE id = %s",
-                (position, project_id),
-            )
+    projects = datastore.load("projects")
+    order_index = {pid: i for i, pid in enumerate(ordered_ids, start=1)}
+    for p in projects:
+        if p["id"] in order_index:
+            p["sort_order"] = order_index[p["id"]]
+
+    if err := _save_or_502("projects", projects):
+        return err
 
     return jsonify({"message": "Order updated"})
 
@@ -250,13 +240,8 @@ def _slugify(title: str) -> str:
 @require_admin
 def list_posts():
     """GET /api/admin/posts — List all posts (including drafts)."""
-    with get_db() as (conn, cur):
-        cur.execute("""
-            SELECT id, title, slug, published, created_at, updated_at
-            FROM posts
-            ORDER BY created_at DESC
-        """)
-        posts = cur.fetchall()
+    posts = datastore.load("posts")
+    posts.sort(key=lambda p: p.get("created_at", ""), reverse=True)
     return jsonify(posts)
 
 
@@ -266,28 +251,31 @@ def create_post():
     """
     POST /api/admin/posts
     Body: { "title": "...", "content": "...", "slug": "...", "published": false }
-
-    Demonstrates: INSERT with slug for SEO-friendly URLs
     """
     data = request.get_json()
     if not data or not data.get("title") or not data.get("content"):
         return jsonify({"error": "Title and content are required"}), 400
 
-    # Generate slug from title if not provided
     slug = data.get("slug") or _slugify(data["title"])
+    posts = datastore.load("posts")
 
-    with get_db() as (conn, cur):
-        cur.execute("""
-            INSERT INTO posts (title, content, slug, published)
-            VALUES (%s, %s, %s, %s)
-            RETURNING id, title, slug, created_at
-        """, (
-            data["title"],
-            data["content"],
-            slug,
-            data.get("published", False),
-        ))
-        post = cur.fetchone()
+    if any(p.get("slug") == slug for p in posts):
+        return jsonify({"error": "A post with that slug already exists"}), 409
+
+    now = datastore.now_iso()
+    post = {
+        "id": datastore.next_id(posts),
+        "title": data["title"],
+        "content": data["content"],
+        "slug": slug,
+        "published": bool(data.get("published", False)),
+        "created_at": now,
+        "updated_at": now,
+    }
+    posts.append(post)
+
+    if err := _save_or_502("posts", posts):
+        return err
 
     return jsonify(post), 201
 
@@ -300,27 +288,25 @@ def update_post(post_id):
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    with get_db() as (conn, cur):
-        cur.execute("""
-            UPDATE posts
-            SET title = %s,
-                content = %s,
-                slug = %s,
-                published = %s,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = %s
-            RETURNING id, title, slug, updated_at
-        """, (
-            data.get("title", ""),
-            data.get("content", ""),
-            data.get("slug", ""),
-            data.get("published", False),
-            post_id,
-        ))
-        post = cur.fetchone()
-
+    posts = datastore.load("posts")
+    post = next((p for p in posts if p["id"] == post_id), None)
     if not post:
         return jsonify({"error": "Post not found"}), 404
+
+    new_slug = data.get("slug") or post["slug"]
+    if any(p.get("slug") == new_slug and p["id"] != post_id for p in posts):
+        return jsonify({"error": "A post with that slug already exists"}), 409
+
+    post.update({
+        "title": data.get("title", ""),
+        "content": data.get("content", ""),
+        "slug": new_slug,
+        "published": bool(data.get("published", False)),
+        "updated_at": datastore.now_iso(),
+    })
+
+    if err := _save_or_502("posts", posts):
+        return err
 
     return jsonify(post)
 
@@ -329,56 +315,15 @@ def update_post(post_id):
 @require_admin
 def delete_post(post_id):
     """DELETE /api/admin/posts/:id — Delete a post."""
-    with get_db() as (conn, cur):
-        cur.execute("DELETE FROM posts WHERE id = %s RETURNING id", (post_id,))
-        deleted = cur.fetchone()
-
-    if not deleted:
+    posts = datastore.load("posts")
+    remaining = [p for p in posts if p["id"] != post_id]
+    if len(remaining) == len(posts):
         return jsonify({"error": "Post not found"}), 404
 
+    if err := _save_or_502("posts", remaining):
+        return err
+
     return jsonify({"message": "Post deleted"})
-
-
-# ---------------------------------------------------------------------------
-# Contact Messages
-# ---------------------------------------------------------------------------
-
-@admin_bp.route("/api/admin/messages", methods=["GET"])
-@require_admin
-def list_messages():
-    """GET /api/admin/messages — List all contact form submissions."""
-    with get_db() as (conn, cur):
-        cur.execute("""
-            SELECT id, name, email, message, created_at
-            FROM contact_messages
-            ORDER BY created_at DESC
-        """)
-        messages = cur.fetchall()
-    return jsonify(messages)
-
-
-@admin_bp.route("/api/admin/messages/<int:message_id>", methods=["DELETE"])
-@require_admin
-def delete_message(message_id):
-    """
-    DELETE /api/admin/messages/:id
-
-    Demonstrates: DELETE with WHERE clause
-    """
-    with get_db() as (conn, cur):
-        # -- Demonstrates: DELETE with WHERE + RETURNING
-        # -- Purpose: Remove a contact message after reading it
-        cur.execute("""
-            DELETE FROM contact_messages
-            WHERE id = %s
-            RETURNING id
-        """, (message_id,))
-        deleted = cur.fetchone()
-
-    if not deleted:
-        return jsonify({"error": "Message not found"}), 404
-
-    return jsonify({"message": "Message deleted"})
 
 
 # ---------------------------------------------------------------------------
@@ -392,13 +337,8 @@ _ALLOWED_THEMES = {"destiny2", "osu", "wakesurf", "geometrydash", "none"}
 @require_admin
 def list_interests():
     """GET /api/admin/interests — List all interest cards in display order."""
-    with get_db() as (conn, cur):
-        cur.execute("""
-            SELECT id, title, tag, blurb, description, accent, theme, sort_order, created_at
-            FROM interests
-            ORDER BY sort_order ASC, id ASC
-        """)
-        interests = cur.fetchall()
+    interests = datastore.load("interests")
+    interests.sort(key=lambda i: (i.get("sort_order", 0), i.get("id", 0)))
     return jsonify(interests)
 
 
@@ -414,24 +354,24 @@ def create_interest():
     if theme not in _ALLOWED_THEMES:
         theme = "none"
 
-    with get_db() as (conn, cur):
-        cur.execute("SELECT COALESCE(MAX(sort_order), 0) + 1 AS next_order FROM interests")
-        next_order = cur.fetchone()["next_order"]
+    interests = datastore.load("interests")
+    next_order = max((i.get("sort_order", 0) for i in interests), default=0) + 1
 
-        cur.execute("""
-            INSERT INTO interests (title, tag, blurb, description, accent, theme, sort_order)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            RETURNING id, title, created_at
-        """, (
-            data["title"],
-            data.get("tag", ""),
-            data.get("blurb", ""),
-            data.get("description", ""),
-            data.get("accent", "#6fe7c1"),
-            theme,
-            data.get("sort_order", next_order),
-        ))
-        interest = cur.fetchone()
+    interest = {
+        "id": datastore.next_id(interests),
+        "title": data["title"],
+        "tag": data.get("tag", ""),
+        "blurb": data.get("blurb", ""),
+        "description": data.get("description", ""),
+        "accent": data.get("accent", "#6fe7c1"),
+        "theme": theme,
+        "sort_order": data.get("sort_order") or next_order,
+        "created_at": datastore.now_iso(),
+    }
+    interests.append(interest)
+
+    if err := _save_or_502("interests", interests):
+        return err
 
     return jsonify(interest), 201
 
@@ -448,32 +388,23 @@ def update_interest(interest_id):
     if theme not in _ALLOWED_THEMES:
         theme = "none"
 
-    with get_db() as (conn, cur):
-        cur.execute("""
-            UPDATE interests
-            SET title = %s,
-                tag = %s,
-                blurb = %s,
-                description = %s,
-                accent = %s,
-                theme = %s,
-                sort_order = %s
-            WHERE id = %s
-            RETURNING id, title
-        """, (
-            data.get("title", ""),
-            data.get("tag", ""),
-            data.get("blurb", ""),
-            data.get("description", ""),
-            data.get("accent", "#6fe7c1"),
-            theme,
-            data.get("sort_order", 0),
-            interest_id,
-        ))
-        interest = cur.fetchone()
-
+    interests = datastore.load("interests")
+    interest = next((i for i in interests if i["id"] == interest_id), None)
     if not interest:
         return jsonify({"error": "Interest not found"}), 404
+
+    interest.update({
+        "title": data.get("title", ""),
+        "tag": data.get("tag", ""),
+        "blurb": data.get("blurb", ""),
+        "description": data.get("description", ""),
+        "accent": data.get("accent", "#6fe7c1"),
+        "theme": theme,
+        "sort_order": data.get("sort_order", interest.get("sort_order", 0)),
+    })
+
+    if err := _save_or_502("interests", interests):
+        return err
 
     return jsonify(interest)
 
@@ -482,12 +413,13 @@ def update_interest(interest_id):
 @require_admin
 def delete_interest(interest_id):
     """DELETE /api/admin/interests/:id — Delete an interest card."""
-    with get_db() as (conn, cur):
-        cur.execute("DELETE FROM interests WHERE id = %s RETURNING id", (interest_id,))
-        deleted = cur.fetchone()
-
-    if not deleted:
+    interests = datastore.load("interests")
+    remaining = [i for i in interests if i["id"] != interest_id]
+    if len(remaining) == len(interests):
         return jsonify({"error": "Interest not found"}), 404
+
+    if err := _save_or_502("interests", remaining):
+        return err
 
     return jsonify({"message": "Interest deleted"})
 
@@ -503,8 +435,7 @@ def upload_image():
     POST /api/admin/upload
     Body: multipart/form-data with a "file" field
 
-    Demonstrates: AWS S3 integration for file storage.
-    Uploads an image and returns its URL.
+    Uploads an image to S3 (or local storage in dev) and returns its URL.
     """
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400

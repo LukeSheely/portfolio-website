@@ -9,6 +9,20 @@ const API_BASE = import.meta.env.VITE_API_URL
   ? import.meta.env.VITE_API_URL + "/api"
   : "/api";
 
+/**
+ * fetch() + parse JSON, throwing on a non-2xx response so callers can
+ * `catch` a real failure (e.g. a GitHub commit error from the admin data
+ * store) instead of silently treating an { error } payload as success.
+ */
+async function requestJson(url, options) {
+  const res = await fetch(url, options);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || `Request failed (${res.status})`);
+  }
+  return data;
+}
+
 // ---------------------------------------------------------------------------
 // Public endpoints
 // ---------------------------------------------------------------------------
@@ -84,38 +98,34 @@ export async function adminFetchProjects(token) {
 }
 
 export async function adminCreateProject(token, data) {
-  const res = await fetch(`${API_BASE}/admin/projects`, {
+  return requestJson(`${API_BASE}/admin/projects`, {
     method: "POST",
     headers: adminHeaders(token),
     body: JSON.stringify(data),
   });
-  return res.json();
 }
 
 export async function adminUpdateProject(token, id, data) {
-  const res = await fetch(`${API_BASE}/admin/projects/${id}`, {
+  return requestJson(`${API_BASE}/admin/projects/${id}`, {
     method: "PUT",
     headers: adminHeaders(token),
     body: JSON.stringify(data),
   });
-  return res.json();
 }
 
 export async function adminDeleteProject(token, id) {
-  const res = await fetch(`${API_BASE}/admin/projects/${id}`, {
+  return requestJson(`${API_BASE}/admin/projects/${id}`, {
     method: "DELETE",
     headers: adminHeaders(token),
   });
-  return res.json();
 }
 
 export async function adminReorderProjects(token, orderedIds) {
-  const res = await fetch(`${API_BASE}/admin/projects/reorder`, {
+  return requestJson(`${API_BASE}/admin/projects/reorder`, {
     method: "PUT",
     headers: adminHeaders(token),
     body: JSON.stringify({ order: orderedIds }),
   });
-  return res.json();
 }
 
 export async function adminFetchPosts(token) {
@@ -126,29 +136,26 @@ export async function adminFetchPosts(token) {
 }
 
 export async function adminCreatePost(token, data) {
-  const res = await fetch(`${API_BASE}/admin/posts`, {
+  return requestJson(`${API_BASE}/admin/posts`, {
     method: "POST",
     headers: adminHeaders(token),
     body: JSON.stringify(data),
   });
-  return res.json();
 }
 
 export async function adminUpdatePost(token, id, data) {
-  const res = await fetch(`${API_BASE}/admin/posts/${id}`, {
+  return requestJson(`${API_BASE}/admin/posts/${id}`, {
     method: "PUT",
     headers: adminHeaders(token),
     body: JSON.stringify(data),
   });
-  return res.json();
 }
 
 export async function adminDeletePost(token, id) {
-  const res = await fetch(`${API_BASE}/admin/posts/${id}`, {
+  return requestJson(`${API_BASE}/admin/posts/${id}`, {
     method: "DELETE",
     headers: adminHeaders(token),
   });
-  return res.json();
 }
 
 export async function adminFetchInterests(token) {
@@ -159,44 +166,26 @@ export async function adminFetchInterests(token) {
 }
 
 export async function adminCreateInterest(token, data) {
-  const res = await fetch(`${API_BASE}/admin/interests`, {
+  return requestJson(`${API_BASE}/admin/interests`, {
     method: "POST",
     headers: adminHeaders(token),
     body: JSON.stringify(data),
   });
-  return res.json();
 }
 
 export async function adminUpdateInterest(token, id, data) {
-  const res = await fetch(`${API_BASE}/admin/interests/${id}`, {
+  return requestJson(`${API_BASE}/admin/interests/${id}`, {
     method: "PUT",
     headers: adminHeaders(token),
     body: JSON.stringify(data),
   });
-  return res.json();
 }
 
 export async function adminDeleteInterest(token, id) {
-  const res = await fetch(`${API_BASE}/admin/interests/${id}`, {
+  return requestJson(`${API_BASE}/admin/interests/${id}`, {
     method: "DELETE",
     headers: adminHeaders(token),
   });
-  return res.json();
-}
-
-export async function adminFetchMessages(token) {
-  const res = await fetch(`${API_BASE}/admin/messages`, {
-    headers: adminHeaders(token),
-  });
-  return res.json();
-}
-
-export async function adminDeleteMessage(token, id) {
-  const res = await fetch(`${API_BASE}/admin/messages/${id}`, {
-    method: "DELETE",
-    headers: adminHeaders(token),
-  });
-  return res.json();
 }
 
 export async function adminUploadImage(token, file) {

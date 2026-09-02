@@ -1,0 +1,46 @@
+[
+  {
+    "id": 1,
+    "title": "Destiny 2",
+    "tag": "Team Coordination - Agile Environment",
+    "blurb": "MMO Looter-Shooter",
+    "description": "Now that live service is over for this game, I am working on \"solo-flawless\" activities, starting with dungeons. A solo flawless is completing an activity which is usually done with 3 people, solo - without dying once. Currently have finished \"Prophecy\" and \"Grasp of Avarice\".",
+    "accent": "#d9b877",
+    "theme": "destiny2",
+    "sort_order": 1,
+    "created_at": "2026-07-21T21:34:35"
+  },
+  {
+    "id": 2,
+    "title": "osu!",
+    "tag": "Pushing my mechanical skill to the limit",
+    "blurb": "Circle game",
+    "description": "Peak rank #79,812 out of millions of registered players. The game is way more fun than it seems, I swear.",
+    "accent": "#ff66ab",
+    "theme": "osu",
+    "sort_order": 2,
+    "created_at": "2026-07-21T21:34:35"
+  },
+  {
+    "id": 3,
+    "title": "Wakesurfing",
+    "tag": "A relaxing sport, rather uncommon",
+    "blurb": "Touching some grass - I mean water",
+    "description": "As of recently my fundamentals have progressed enough to start attempting the easy tricks. Technically landed a 360 once before but it was all luck - I was very unprepared.",
+    "accent": "#41b8e0",
+    "theme": "wakesurf",
+    "sort_order": 3,
+    "created_at": "2026-07-21T21:34:35"
+  },
+  {
+    "id": 4,
+    "title": "Geometry Dash",
+    "tag": "More rhythm games",
+    "blurb": "The game every gen-z played as a kid",
+    "description": "Working on the level \"Nine Circles\"",
+    "accent": "#3be0ff",
+    "theme": "geometrydash",
+    "sort_order": 4,
+    "created_at": "2026-07-21T22:06:38"
+  }
+]
