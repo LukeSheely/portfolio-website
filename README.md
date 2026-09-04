@@ -38,9 +38,9 @@ Public reads hit the JSON files bundled with the deployment — no network call,
 
 ## Features
 
-- **Home** — Featured projects and a tag cloud
-- **Projects** — All projects with an expandable detail view showing tags
-- **Interests** — Flip cards, each swapping the background into a themed animation
+- **Home** — Editorial typography, featured project gallery, portrait, and skills
+- **Projects** — Responsive project collection with descriptions, source/demo links, and direct project anchors
+- **Interests** — Editorial cards with keyboard-accessible details
 - **Contact** — Form that emails you directly via AWS SES (nothing is stored server-side)
 - **Admin** — Password-protected dashboard to manage projects, posts, and interests
 
@@ -159,7 +159,7 @@ See [`docs/deployment-guide.md`](docs/deployment-guide.md) for detailed deployme
 ## Technologies & Skills Demonstrated
 
 - **Backend:** Python, Flask, REST API design, CORS
-- **Frontend:** React, React Router, modern JavaScript (ES6+), WebGL/canvas animation
+- **Frontend:** React, React Router, modern JavaScript (ES6+), responsive editorial layouts, reduced-motion support
 - **Content architecture:** Git-backed CMS pattern (flat-file storage, API-driven commits, CI/CD-triggered publishing)
 - **Cloud:** Vercel (serverless functions + static hosting), GitHub Contents API
 - **AWS:** boto3 SDK, S3 (deployed), SES (deployed)

@@ -31,8 +31,7 @@ export async function fetchProjects(featured = false) {
   const url = featured
     ? `${API_BASE}/projects?featured=true`
     : `${API_BASE}/projects`;
-  const res = await fetch(url);
-  return res.json();
+  return requestJson(url);
 }
 
 export async function fetchProject(id) {
@@ -61,12 +60,11 @@ export async function fetchInterests() {
 }
 
 export async function submitContact(data) {
-  const res = await fetch(`${API_BASE}/contact`, {
+  return requestJson(`${API_BASE}/contact`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  return res.json();
 }
 
 // ---------------------------------------------------------------------------

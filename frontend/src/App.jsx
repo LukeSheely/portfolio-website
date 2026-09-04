@@ -1,124 +1,99 @@
 import React, { useEffect } from "react";
-import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  NavLink,
+  Link,
+  useLocation,
+} from "react-router-dom";
 import Home from "./pages/Home";
 import Projects from "./pages/Projects";
 import Interests from "./pages/Interests";
 import Contact from "./pages/Contact";
 import Admin from "./pages/Admin";
-import AuroraBackground from "./components/AuroraBackground";
-import ShaderAurora from "./components/ShaderAurora";
-import InterestBackground from "./components/InterestBackground";
-import { BackgroundProvider } from "./context/BackgroundContext";
 
-function App() {
-  // Pointer interactions: glass-card spotlight + 3D tilt, and magnetic buttons.
+function RouteReset() {
+  const { pathname } = useLocation();
   useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // Tilt/spotlight/magnetism are cursor affordances — skip on touch so
-    // buttons and cards don't jump around under a finger during scroll.
-    const finePointer = window.matchMedia("(pointer: fine)").matches;
-    if (!finePointer) return;
-    const TILT = 6; // max degrees
-    let activeCard = null;
-
-    const clearTilt = (card) => {
-      card.style.setProperty("--rx", "0deg");
-      card.style.setProperty("--ry", "0deg");
+    window.scrollTo({ top: 0, behavior: "instant" });
+    const names = {
+      "/": "Creative Developer",
+      "/projects": "Selected Work",
+      "/contact": "Contact",
+      "/interests": "Off the Clock",
+      "/admin": "Admin",
     };
+    document.title = "Luke Sheely — " + (names[pathname] || "Portfolio");
+  }, [pathname]);
+  return null;
+}
 
-    const onMove = (e) => {
-      // --- glass cards ---
-      const card = e.target.closest?.(".card");
-      if (activeCard && card !== activeCard) {
-        clearTilt(activeCard);
-        activeCard = null;
-      }
-      if (card) {
-        activeCard = card;
-        const r = card.getBoundingClientRect();
-        const px = (e.clientX - r.left) / r.width;
-        const py = (e.clientY - r.top) / r.height;
-        card.style.setProperty("--mx", `${e.clientX - r.left}px`);
-        card.style.setProperty("--my", `${e.clientY - r.top}px`);
-        if (!reduced) {
-          card.style.setProperty("--ry", `${(px - 0.5) * 2 * TILT}deg`);
-          card.style.setProperty("--rx", `${-(py - 0.5) * 2 * TILT}deg`);
-        }
-      }
-
-      // --- magnetic buttons ---
-      if (reduced) return;
-      document.querySelectorAll("[data-magnetic]").forEach((el) => {
-        const r = el.getBoundingClientRect();
-        const dx = e.clientX - (r.left + r.width / 2);
-        const dy = e.clientY - (r.top + r.height / 2);
-        const dist = Math.hypot(dx, dy);
-        const radius = Math.max(r.width, r.height) / 2 + 70;
-        if (dist < radius) {
-          const s = 1 - dist / radius;
-          el.style.transform = `translate(${dx * 0.28 * s}px, ${dy * 0.28 * s}px)`;
-        } else {
-          el.style.transform = "";
-        }
-      });
-    };
-
-    document.addEventListener("pointermove", onMove);
-    return () => document.removeEventListener("pointermove", onMove);
-  }, []);
-
+export default function App() {
   return (
-    <BackgroundProvider>
     <BrowserRouter>
-      <div className="scroll-progress" aria-hidden="true" />
-      <AuroraBackground />
-      <ShaderAurora />
-      <InterestBackground />
-
-      <nav className="navbar">
-        <div className="container">
-          <NavLink to="/" className="navbar-brand">
-            <span className="dot" aria-hidden="true" />
-            Luke Sheely
+      <RouteReset />
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+      <header className="navbar container">
+        <NavLink to="/" className="navbar-brand" aria-label="Luke Sheely home">
+          luke sheely
+          <span className="brand-star" aria-hidden="true">
+            ✳
+          </span>
+        </NavLink>
+        <span className="nav-note">DEVELOPER &amp; CURIOUS HUMAN</span>
+        <nav aria-label="Main navigation">
+          <NavLink to="/" end>
+            Home
           </NavLink>
-          <ul className="navbar-links">
-            <li>
-              <NavLink to="/" end>
-                Home
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/projects">Projects</NavLink>
-            </li>
-            {/* Interests tab hidden for now — page, route, and admin editing
-                are all kept. Uncomment to bring it back into the nav. */}
-            {/*
-            <li>
-              <NavLink to="/interests">Interests</NavLink>
-            </li>
-            */}
-            <li>
-              <NavLink to="/contact">Contact</NavLink>
-            </li>
-            <li>
-              <NavLink to="/admin">Admin</NavLink>
-            </li>
-          </ul>
-        </div>
-      </nav>
-
-      <main className="container">
+          <NavLink to="/projects">Work</NavLink>
+          <NavLink to="/contact" className="nav-contact">
+            Let’s talk <span aria-hidden="true">↗</span>
+          </NavLink>
+        </nav>
+      </header>
+      <main id="main" className="container" tabIndex="-1">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/interests" element={<Interests />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/admin" element={<Admin />} />
+          <Route
+            path="*"
+            element={
+              <div className="page">
+                <p className="eyebrow">404 / A little off course</p>
+                <h1 className="page-title">
+                  Let’s head <em>home.</em>
+                </h1>
+                <Link className="btn btn-primary" to="/">
+                  Back to home ↗
+                </Link>
+              </div>
+            }
+          />
         </Routes>
       </main>
+      <footer className="site-footer container">
+        <Link className="footer-name" to="/">
+          Luke Sheely<span>✳</span>
+        </Link>
+        <p>Built with curiosity. Always in progress.</p>
+        <div>
+          <a
+            href="https://github.com/LukeSheely"
+            target="_blank"
+            rel="noreferrer"
+          >
+            GitHub ↗
+          </a>
+          <Link to="/admin">Admin</Link>
+          <span>© {new Date().getFullYear()}</span>
+        </div>
+      </footer>
     </BrowserRouter>
-    </BackgroundProvider>
   );
 }
-
-export default App;
