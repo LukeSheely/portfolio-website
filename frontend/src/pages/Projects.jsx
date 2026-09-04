@@ -1,106 +1,79 @@
-import React, { useState, useEffect } from "react";
-import { fetchProjects, fetchProject } from "../api";
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { fetchProjects } from "../api";
 import Reveal from "../components/Reveal";
+import ProjectCard from "../components/ProjectCard";
 
-function Projects() {
+export default function Projects() {
   const [projects, setProjects] = useState([]);
-  const [selected, setSelected] = useState(null);
-
+  const [state, setState] = useState("loading");
+  const { hash } = useLocation();
   useEffect(() => {
-    fetchProjects().then((data) => setProjects(Array.isArray(data) ? data : []));
+    let active = true;
+    fetchProjects()
+      .then((data) => {
+        if (!Array.isArray(data)) throw new Error("Invalid projects");
+        if (active) {
+          setProjects(data);
+          setState("ready");
+        }
+      })
+      .catch(() => {
+        if (active) setState("error");
+      });
+    return () => {
+      active = false;
+    };
   }, []);
-
-  const handleSelect = async (id) => {
-    if (selected?.id === id) {
-      setSelected(null);
-      return;
-    }
-    const project = await fetchProject(id);
-    setSelected(project);
-  };
-
+  useEffect(() => {
+    if (state === "ready" && hash)
+      document
+        .getElementById(hash.slice(1))
+        ?.scrollIntoView({ block: "center" });
+  }, [state, hash]);
   return (
     <div className="page">
-      <Reveal>
-        <p className="eyebrow">selected work</p>
-        <h1 className="page-title">Projects</h1>
+      <Reveal className="page-heading">
+        <p className="eyebrow">THE COLLECTION / SELECTED PROJECTS</p>
+        <h1 className="page-title">
+          Ideas into
+          <br />
+          <em>real things.</em>
+        </h1>
         <p className="page-subtitle">
-          Click any project to expand its details, stack, and links.
+          Experiments in machine learning, useful tools, and a little play.
+          Built to learn. Made to work.
         </p>
       </Reveal>
-
-      {projects.map((project, i) => (
-        <Reveal key={project.id} delay={i * 70}>
-          <div
-            className="card"
-            style={{ cursor: "pointer" }}
-            onClick={() => handleSelect(project.id)}
-          >
-            {project.image_url && (
-              <img
-                src={project.image_url}
-                alt={project.title}
-                className="project-image"
-              />
-            )}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "start",
-                gap: 12,
-              }}
-            >
-              <h3 className="card-title">{project.title}</h3>
-              {project.featured && <span className="tag">Featured</span>}
-            </div>
-            <p className="card-meta">{project.tech_stack}</p>
-            <p className="card-description">{project.description}</p>
-
-            {selected?.id === project.id && (
-              <div
-                style={{
-                  marginTop: 18,
-                  paddingTop: 18,
-                  borderTop: "1px solid var(--border)",
-                }}
-              >
-                <div className="tags-list">
-                  {selected.tags?.map((tag) => (
-                    <span className="tag" key={tag.id}>
-                      {tag.name}
-                    </span>
-                  ))}
-                </div>
-                <div className="card-links">
-                  {selected.live_url && (
-                    <a
-                      href={selected.live_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Live Demo
-                    </a>
-                  )}
-                  {selected.github_url && (
-                    <a
-                      href={selected.github_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      GitHub
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </Reveal>
-      ))}
+      <div className="collection-label">
+        <span>ALL WORK</span>
+        <span>
+          {state === "ready"
+            ? String(projects.length).padStart(2, "0") + " PROJECTS"
+            : "COLLECTION"}
+        </span>
+      </div>
+      {state === "loading" && (
+        <p className="loading-state" role="status">
+          Opening the collection…
+        </p>
+      )}
+      {state === "error" && (
+        <p className="alert alert-error" role="alert">
+          Projects couldn’t load. Please refresh or{" "}
+          <a href="https://github.com/LukeSheely">visit my GitHub ↗</a>.
+        </p>
+      )}
+      {state === "ready" && !projects.length && (
+        <p>New projects are on the way.</p>
+      )}
+      <div className="project-grid all-projects">
+        {projects.map((project, i) => (
+          <Reveal key={project.id}>
+            <ProjectCard project={project} index={i} details />
+          </Reveal>
+        ))}
+      </div>
     </div>
   );
 }
-
-export default Projects;
