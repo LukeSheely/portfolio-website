@@ -22,7 +22,7 @@ function Home() {
           <Reveal>
             <div className="status-pill">
               <span className="live" aria-hidden="true" />
-              open to fall 2026 internships
+              open to summer 2027 internships
             </div>
           </Reveal>
           <Reveal delay={60}>
