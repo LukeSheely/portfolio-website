@@ -1,106 +1,74 @@
-import React, { useState, useEffect } from "react";
-import { fetchProjects, fetchProject } from "../api";
-import Reveal from "../components/Reveal";
-
-function Projects() {
-  const [projects, setProjects] = useState([]);
+import React, { useState } from "react";
+import { useContent, category } from "../content";
+import Icon from "../components/Icon";
+import { ProjectCard, ProjectSheet } from "../components/ProjectCard";
+export default function Projects() {
+  const projects = useContent("projects");
   const [selected, setSelected] = useState(null);
-
-  useEffect(() => {
-    fetchProjects().then((data) => setProjects(Array.isArray(data) ? data : []));
-  }, []);
-
-  const handleSelect = async (id) => {
-    if (selected?.id === id) {
-      setSelected(null);
-      return;
-    }
-    const project = await fetchProject(id);
-    setSelected(project);
-  };
-
+  const [filter, setFilter] = useState("All");
+  const [query, setQuery] = useState("");
+  const visible = projects.filter(
+    (p) =>
+      (filter === "All" || category(p) === filter) &&
+      `${p.title} ${p.tech_stack}`.toLowerCase().includes(query.toLowerCase()),
+  );
   return (
     <div className="page">
-      <Reveal>
-        <p className="eyebrow">selected work</p>
-        <h1 className="page-title">Projects</h1>
-        <p className="page-subtitle">
-          Click any project to expand its details, stack, and links.
-        </p>
-      </Reveal>
-
-      {projects.map((project, i) => (
-        <Reveal key={project.id} delay={i * 70}>
-          <div
-            className="card"
-            style={{ cursor: "pointer" }}
-            onClick={() => handleSelect(project.id)}
-          >
-            {project.image_url && (
-              <img
-                src={project.image_url}
-                alt={project.title}
-                className="project-image"
-              />
-            )}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "start",
-                gap: 12,
-              }}
+      <p className="eyebrow">THE PROJECT LIBRARY</p>
+      <h1 className="page-title">Ideas, made real.</h1>
+      <p className="page-subtitle">
+        A collection of experiments, useful tools, and things built to learn.
+      </p>
+      <div className="project-toolbar">
+        <div className="segmented" aria-label="Filter projects">
+          {["All", "Web apps", "Machine learning", "Games"].map((f) => (
+            <button
+              key={f}
+              aria-pressed={filter === f}
+              className={filter === f ? "active" : ""}
+              onClick={() => setFilter(f)}
             >
-              <h3 className="card-title">{project.title}</h3>
-              {project.featured && <span className="tag">Featured</span>}
-            </div>
-            <p className="card-meta">{project.tech_stack}</p>
-            <p className="card-description">{project.description}</p>
-
-            {selected?.id === project.id && (
-              <div
-                style={{
-                  marginTop: 18,
-                  paddingTop: 18,
-                  borderTop: "1px solid var(--border)",
-                }}
-              >
-                <div className="tags-list">
-                  {selected.tags?.map((tag) => (
-                    <span className="tag" key={tag.id}>
-                      {tag.name}
-                    </span>
-                  ))}
-                </div>
-                <div className="card-links">
-                  {selected.live_url && (
-                    <a
-                      href={selected.live_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Live Demo
-                    </a>
-                  )}
-                  {selected.github_url && (
-                    <a
-                      href={selected.github_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      GitHub
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </Reveal>
-      ))}
+              {f}
+            </button>
+          ))}
+        </div>
+        <label className="search">
+          <Icon name="search" size={17} />
+          <input
+            aria-label="Search projects"
+            placeholder="Search projects"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </label>
+      </div>
+      <p className="results-count" aria-live="polite">
+        {visible.length} {visible.length === 1 ? "project" : "projects"}
+      </p>
+      <div className="project-grid">
+        {visible.map((p) => (
+          <ProjectCard key={p.id} project={p} onSelect={setSelected} />
+        ))}
+      </div>
+      {!visible.length && (
+        <div className="empty-state">
+          <Icon name="search" size={32} />
+          <h2>No projects found</h2>
+          <p>Try another keyword or category.</p>
+          <button
+            className="btn btn-secondary"
+            onClick={() => {
+              setQuery("");
+              setFilter("All");
+            }}
+          >
+            Clear filters
+          </button>
+        </div>
+      )}
+      {selected && (
+        <ProjectSheet project={selected} onClose={() => setSelected(null)} />
+      )}
     </div>
   );
 }
-
-export default Projects;

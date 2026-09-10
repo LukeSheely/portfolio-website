@@ -17,8 +17,6 @@ from extensions import limiter
 from routes.projects import projects_bp
 from routes.posts import posts_bp
 from routes.contact import contact_bp
-from routes.admin import admin_bp
-from routes.interests import interests_bp
 import config
 
 app = Flask(__name__)
@@ -33,8 +31,6 @@ limiter.init_app(app)
 app.register_blueprint(projects_bp)
 app.register_blueprint(posts_bp)
 app.register_blueprint(contact_bp)
-app.register_blueprint(admin_bp)
-app.register_blueprint(interests_bp)
 
 
 # Serve locally uploaded files during development

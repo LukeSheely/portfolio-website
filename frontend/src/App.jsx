@@ -1,124 +1,107 @@
-import React, { useEffect } from "react";
-import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  NavLink,
+  Link,
+  useLocation,
+} from "react-router-dom";
 import Home from "./pages/Home";
 import Projects from "./pages/Projects";
-import Interests from "./pages/Interests";
 import Contact from "./pages/Contact";
-import Admin from "./pages/Admin";
-import AuroraBackground from "./components/AuroraBackground";
-import ShaderAurora from "./components/ShaderAurora";
-import InterestBackground from "./components/InterestBackground";
-import { BackgroundProvider } from "./context/BackgroundContext";
-
-function App() {
-  // Pointer interactions: glass-card spotlight + 3D tilt, and magnetic buttons.
+import Icon from "./components/Icon";
+function Shell() {
+  const { pathname } = useLocation();
+  const [dark, setDark] = useState(() => {
+    try {
+      return localStorage.getItem("appearance")
+        ? localStorage.getItem("appearance") === "dark"
+        : matchMedia("(prefers-color-scheme: dark)").matches;
+    } catch {
+      return false;
+    }
+  });
   useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // Tilt/spotlight/magnetism are cursor affordances — skip on touch so
-    // buttons and cards don't jump around under a finger during scroll.
-    const finePointer = window.matchMedia("(pointer: fine)").matches;
-    if (!finePointer) return;
-    const TILT = 6; // max degrees
-    let activeCard = null;
-
-    const clearTilt = (card) => {
-      card.style.setProperty("--rx", "0deg");
-      card.style.setProperty("--ry", "0deg");
-    };
-
-    const onMove = (e) => {
-      // --- glass cards ---
-      const card = e.target.closest?.(".card");
-      if (activeCard && card !== activeCard) {
-        clearTilt(activeCard);
-        activeCard = null;
-      }
-      if (card) {
-        activeCard = card;
-        const r = card.getBoundingClientRect();
-        const px = (e.clientX - r.left) / r.width;
-        const py = (e.clientY - r.top) / r.height;
-        card.style.setProperty("--mx", `${e.clientX - r.left}px`);
-        card.style.setProperty("--my", `${e.clientY - r.top}px`);
-        if (!reduced) {
-          card.style.setProperty("--ry", `${(px - 0.5) * 2 * TILT}deg`);
-          card.style.setProperty("--rx", `${-(py - 0.5) * 2 * TILT}deg`);
-        }
-      }
-
-      // --- magnetic buttons ---
-      if (reduced) return;
-      document.querySelectorAll("[data-magnetic]").forEach((el) => {
-        const r = el.getBoundingClientRect();
-        const dx = e.clientX - (r.left + r.width / 2);
-        const dy = e.clientY - (r.top + r.height / 2);
-        const dist = Math.hypot(dx, dy);
-        const radius = Math.max(r.width, r.height) / 2 + 70;
-        if (dist < radius) {
-          const s = 1 - dist / radius;
-          el.style.transform = `translate(${dx * 0.28 * s}px, ${dy * 0.28 * s}px)`;
-        } else {
-          el.style.transform = "";
-        }
-      });
-    };
-
-    document.addEventListener("pointermove", onMove);
-    return () => document.removeEventListener("pointermove", onMove);
-  }, []);
-
+    document.documentElement.dataset.theme = dark ? "dark" : "light";
+    try {
+      localStorage.setItem("appearance", dark ? "dark" : "light");
+    } catch {}
+  }, [dark]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.title = `${pathname === "/" ? "Portfolio" : pathname.slice(1).replace(/^./, (c) => c.toUpperCase())} — Luke Sheely`;
+  }, [pathname]);
   return (
-    <BackgroundProvider>
-    <BrowserRouter>
-      <div className="scroll-progress" aria-hidden="true" />
-      <AuroraBackground />
-      <ShaderAurora />
-      <InterestBackground />
-
-      <nav className="navbar">
-        <div className="container">
-          <NavLink to="/" className="navbar-brand">
-            <span className="dot" aria-hidden="true" />
+    <>
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+      <header className="topbar">
+        <Link to="/" className="brand">
+          <span className="monogram">ls.</span>
+          <span>
             Luke Sheely
-          </NavLink>
-          <ul className="navbar-links">
-            <li>
-              <NavLink to="/" end>
-                Home
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/projects">Projects</NavLink>
-            </li>
-            {/* Interests tab hidden for now — page, route, and admin editing
-                are all kept. Uncomment to bring it back into the nav. */}
-            {/*
-            <li>
-              <NavLink to="/interests">Interests</NavLink>
-            </li>
-            */}
-            <li>
-              <NavLink to="/contact">Contact</NavLink>
-            </li>
-            <li>
-              <NavLink to="/admin">Admin</NavLink>
-            </li>
-          </ul>
+          </span>
+        </Link>
+        <div className="top-actions">
+          <span className="location">
+            <Icon name="pin" size={14} /> Bellingham, WA
+          </span>
+          <a
+            className="header-github text-link"
+            href="https://github.com/LukeSheely"
+            target="_blank"
+            rel="noreferrer"
+          >
+            GitHub <Icon name="up" size={14} />
+          </a>
+          <button
+            className="icon-button"
+            onClick={() => setDark(!dark)}
+            aria-label={`Switch to ${dark ? "light" : "dark"} appearance`}
+          >
+            <Icon name={dark ? "sun" : "moon"} />
+          </button>
         </div>
-      </nav>
-
-      <main className="container">
+      </header>
+      <main id="main" className="container">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/projects" element={<Projects />} />
-          <Route path="/interests" element={<Interests />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route
+            path="*"
+            element={
+              <div className="page">
+                <h1>Nothing here just yet.</h1>
+                <Link className="btn btn-primary" to="/">
+                  Back to overview
+                </Link>
+              </div>
+            }
+          />
         </Routes>
       </main>
-    </BrowserRouter>
-    </BackgroundProvider>
+      <nav className="dock" aria-label="Main navigation">
+        {[
+          ["/", "Overview", "home"],
+          ["/projects", "Projects", "grid"],
+          ["/contact", "Contact", "message"],
+        ].map(([to, label, icon]) => (
+          <NavLink key={to} to={to} end={to === "/"}>
+            <Icon name={icon} />
+            <span>{label}</span>
+          </NavLink>
+        ))}
+      </nav>
+    </>
   );
 }
-
-export default App;
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Shell />
+    </BrowserRouter>
+  );
+}
