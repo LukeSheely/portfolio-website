@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import {
   animate,
   motion,
@@ -34,11 +34,21 @@ export function ProjectArt({ project }) {
         </div>
       ) : kind === "Games" ? (
         <div className="polygon-preview">
-          <div className="game-star">✦</div>
-          <div className="polygon square" />
-          <div className="polygon triangle" />
-          <div className="game-platform" />
-          <span>BETTER TOGETHER.</span>
+          {project.image_url ? (
+            <img
+              className="polygon-preview-image"
+              src={project.image_url}
+              alt=""
+            />
+          ) : (
+            <>
+              <div className="game-star">✦</div>
+              <div className="polygon square" />
+              <div className="polygon triangle" />
+              <div className="game-platform" />
+              <span>BETTER TOGETHER.</span>
+            </>
+          )}
         </div>
       ) : /Beer/.test(project.title) ? (
         <div className="beer-preview">
@@ -108,10 +118,8 @@ export function ProjectSheet({ project, onClose }) {
       if (version === revision.current) onClose();
     });
   }
-  useEffect(() => {
-    const dialog = ref.current;
+  useLayoutEffect(() => {
     const trigger = document.activeElement;
-    dialog.showModal();
     animate(opacity, 1, { duration: 0.15 });
     if (!reduced) {
       y.set(24);
@@ -123,27 +131,42 @@ export function ProjectSheet({ project, onClose }) {
     }
     const before = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        close();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = before;
       animation.current?.stop();
-      dialog.close();
+      window.removeEventListener("keydown", handleKeyDown);
       trigger?.focus();
     };
   }, []);
   return (
-    <dialog
+    <div
       ref={ref}
       className="sheet-dialog"
+      role="dialog"
+      aria-modal="true"
       aria-labelledby="sheet-title"
-      onCancel={(e) => {
-        e.preventDefault();
-        close();
-      }}
       onClick={(e) => {
         if (e.target === e.currentTarget) close();
       }}
     >
       <motion.article className="sheet" style={{ y, opacity }}>
+        <div className="sheet-close-bar">
+          <button
+            autoFocus
+            className="icon-button sheet-close"
+            aria-label="Close project details"
+            onClick={() => close()}
+          >
+            <Icon name="close" />
+          </button>
+        </div>
         <div
           className="sheet-grab"
           aria-hidden="true"
@@ -198,14 +221,6 @@ export function ProjectSheet({ project, onClose }) {
         >
           <span />
         </div>
-        <button
-          autoFocus
-          className="icon-button sheet-close"
-          aria-label="Close project details"
-          onClick={() => close()}
-        >
-          <Icon name="close" />
-        </button>
         <ProjectArt project={project} />
         <div className="sheet-content">
           <p className="eyebrow">{category(project)}</p>
@@ -242,6 +257,6 @@ export function ProjectSheet({ project, onClose }) {
           </div>
         </div>
       </motion.article>
-    </dialog>
+    </div>
   );
 }
