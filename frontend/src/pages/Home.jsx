@@ -1,117 +1,102 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchProjects, fetchTags } from "../api";
-import Reveal from "../components/Reveal";
-import Scramble from "../components/Scramble";
-import NeuralHero from "../components/NeuralHero";
-
-function Home() {
-  const [featured, setFeatured] = useState([]);
-  const [tags, setTags] = useState([]);
-
-  useEffect(() => {
-    fetchProjects(true).then((data) => setFeatured(Array.isArray(data) ? data : []));
-    fetchTags().then((data) => setTags(Array.isArray(data) ? data : []));
-  }, []);
-
+import Icon from "../components/Icon";
+import { useContent } from "../content";
+import { ProjectCard, ProjectSheet } from "../components/ProjectCard";
+export default function Home() {
+  const projects = useContent("projects");
+  const [selected, setSelected] = useState(null);
   return (
-    <div className="page">
-      {/* Hero */}
+    <div className="page overview">
       <section className="hero">
         <div className="hero-copy">
-          <Reveal>
-            <div className="status-pill">
-              <span className="live" aria-hidden="true" />
-              open to summer 2027 internships
-            </div>
-          </Reveal>
-          <Reveal delay={60}>
-            <h1 className="hero-name">
-              Hi, I'm <Scramble className="grad" text="Luke Sheely" />
-            </h1>
-          </Reveal>
-          <Reveal delay={120}>
-            <p className="hero-lead">
-              Third-year Computer Science student at Western Washington University,
-              heading toward machine-learning-integrated technology — pairing
-              development work with AWS and SQL experience. This site is the proof:
-              designed and built end-to-end across database design, SQL, and AWS.
-            </p>
-          </Reveal>
-          <Reveal delay={180}>
-            <div className="hero-actions">
-              <Link to="/projects" className="btn btn-primary magnetic" data-magnetic="">
-                View Projects
-              </Link>
-              <Link to="/contact" className="btn btn-ghost magnetic" data-magnetic="">
-                Get in Touch
-              </Link>
-            </div>
-          </Reveal>
+          <div className="status-pill">
+            <span /> Open to summer 2027 internships
+          </div>
+          <h1>Hi, I’m Luke Sheely.</h1>
+          <p>
+            I’m a computer science student at Western Washington University,
+            focused on machine learning and full-stack development.
+          </p>
+          <div className="hero-actions">
+            <Link className="btn btn-primary" to="/projects">
+              Explore my work <Icon name="arrow" size={17} />
+            </Link>
+            <Link className="text-link" to="/contact">
+              Let’s talk <Icon name="up" size={16} />
+            </Link>
+          </div>
         </div>
-
-        <div className="hero-visual">
-          <NeuralHero />
-          <div className="hero-portrait">
+        <div className="profile-composition">
+          <div className="portrait-card">
             <img src="/headshot.png" alt="Luke Sheely" />
+            <div className="portrait-caption">
+              <strong>Hey, I’m Luke.</strong>
+              <p>Student. Developer. Always learning.</p>
+            </div>
+          </div>
+          <div className="education-chip">
+            <span className="app-icon blue">
+              <Icon name="book" />
+            </span>
+            <div>
+              <strong>Western Washington University</strong>
+              <span>Computer Science · Fourth year</span>
+            </div>
           </div>
         </div>
       </section>
-
-      {/* Featured projects */}
-      <section style={{ marginTop: 72 }}>
-        <Reveal className="section-heading">
-          <h2>Featured Work</h2>
-          <span className="rule" />
-        </Reveal>
-
-        {featured.map((project, i) => (
-          <Reveal key={project.id} delay={i * 80}>
-            <div className="card">
-              {project.image_url && (
-                <img
-                  src={project.image_url}
-                  alt={project.title}
-                  className="project-image"
-                />
-              )}
-              <h3 className="card-title">{project.title}</h3>
-              <p className="card-meta">{project.tech_stack}</p>
-              <p className="card-description">{project.description}</p>
-              <div className="card-links">
-                {project.live_url && (
-                  <a href={project.live_url} target="_blank" rel="noreferrer">
-                    Live Demo
-                  </a>
-                )}
-                {project.github_url && (
-                  <a href={project.github_url} target="_blank" rel="noreferrer">
-                    GitHub
-                  </a>
-                )}
-                <Link to="/projects">Details</Link>
-              </div>
-            </div>
-          </Reveal>
-        ))}
+      <section className="quick-grid" aria-label="About me">
+        <div className="quick-card">
+          <span className="app-icon purple">
+            <Icon name="chip" />
+          </span>
+          <div>
+            <span className="eyebrow">EXPLORING</span>
+            <strong>Machine learning</strong>
+            <p>Turning data into something useful.</p>
+          </div>
+        </div>
+        <div className="quick-card">
+          <span className="app-icon blue">
+            <Icon name="code" />
+          </span>
+          <div>
+            <span className="eyebrow">BUILDING WITH</span>
+            <strong>Python, React & AWS</strong>
+            <p>From the first idea to deployment.</p>
+          </div>
+        </div>
       </section>
-
-      {/* Skills */}
-      <section style={{ marginTop: 64 }}>
-        <Reveal className="section-heading">
-          <h2>Skills &amp; Technologies</h2>
-          <span className="rule" />
-        </Reveal>
-        <div className="tags-list">
-          {tags.map((tag, i) => (
-            <Reveal as="span" key={tag.id} delay={i * 40} className="tag">
-              {tag.name} <span style={{ color: "var(--muted-dim)" }}>({tag.project_count})</span>
-            </Reveal>
+      <section className="work-section">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">SELECTED PROJECTS</p>
+            <h2>A few things I’ve built.</h2>
+          </div>
+          <Link className="text-link" to="/projects">
+            All projects <Icon name="arrow" size={17} />
+          </Link>
+        </div>
+        <div className="project-grid">
+          {projects.slice(0, 2).map((p) => (
+            <ProjectCard key={p.id} project={p} onSelect={setSelected} />
           ))}
         </div>
       </section>
+      <section className="contact-banner">
+        <div>
+          <span className="eyebrow">GOOD THINGS START WITH A CONVERSATION</span>
+          <h2>Have something in mind?</h2>
+          <p>I’d love to hear about it.</p>
+        </div>
+        <Link className="btn btn-primary" to="/contact">
+          Say hello <Icon name="message" size={18} />
+        </Link>
+      </section>
+      {selected && (
+        <ProjectSheet project={selected} onClose={() => setSelected(null)} />
+      )}
     </div>
   );
 }
-
-export default Home;
