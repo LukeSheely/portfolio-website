@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../components/Icon";
-import { useContent } from "../content";
+import { useContent, links } from "../content";
 import { ProjectCard, ProjectSheet } from "../components/ProjectCard";
 export default function Home() {
   const projects = useContent("projects");
@@ -10,9 +10,6 @@ export default function Home() {
     <div className="page overview">
       <section className="hero">
         <div className="hero-copy">
-          <div className="status-pill">
-            <span /> Open to summer 2027 internships
-          </div>
           <h1>Hi, I’m Luke Sheely.</h1>
           <p>
             I’m a computer science student at Western Washington University,
@@ -20,60 +17,34 @@ export default function Home() {
           </p>
           <div className="hero-actions">
             <Link className="btn btn-primary" to="/projects">
-              Explore my work <Icon name="arrow" size={17} />
+              View projects <Icon name="arrow" size={17} />
             </Link>
-            <Link className="text-link" to="/contact">
-              Let’s talk <Icon name="up" size={16} />
-            </Link>
+            <a
+              className="btn"
+              href={links.resume}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Résumé <Icon name="up" size={16} />
+            </a>
           </div>
+          <p className="hero-links">
+            <a href={`mailto:${links.email}`}>{links.email}</a>
+            <a href={links.linkedin} target="_blank" rel="noreferrer">
+              LinkedIn
+            </a>
+            <a href={links.github} target="_blank" rel="noreferrer">
+              GitHub
+            </a>
+          </p>
         </div>
-        <div className="profile-composition">
-          <div className="portrait-card">
-            <img src="/headshot.png" alt="Luke Sheely" />
-            <div className="portrait-caption">
-              <strong>Hey, I’m Luke.</strong>
-              <p>Student. Developer. Always learning.</p>
-            </div>
-          </div>
-          <div className="education-chip">
-            <span className="app-icon blue">
-              <Icon name="book" />
-            </span>
-            <div>
-              <strong>Western Washington University</strong>
-              <span>Computer Science · Fourth year</span>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section className="quick-grid" aria-label="About me">
-        <div className="quick-card">
-          <span className="app-icon purple">
-            <Icon name="chip" />
-          </span>
-          <div>
-            <span className="eyebrow">EXPLORING</span>
-            <strong>Machine learning</strong>
-            <p>Turning data into something useful.</p>
-          </div>
-        </div>
-        <div className="quick-card">
-          <span className="app-icon blue">
-            <Icon name="code" />
-          </span>
-          <div>
-            <span className="eyebrow">BUILDING WITH</span>
-            <strong>Python, React & AWS</strong>
-            <p>From the first idea to deployment.</p>
-          </div>
+        <div className="portrait-card">
+          <img src="/headshot.png" alt="Luke Sheely" />
         </div>
       </section>
       <section className="work-section">
         <div className="section-heading">
-          <div>
-            <p className="eyebrow">SELECTED PROJECTS</p>
-            <h2>A few things I’ve built.</h2>
-          </div>
+          <h2>Projects</h2>
           <Link className="text-link" to="/projects">
             All projects <Icon name="arrow" size={17} />
           </Link>
@@ -85,13 +56,9 @@ export default function Home() {
         </div>
       </section>
       <section className="contact-banner">
-        <div>
-          <span className="eyebrow">GOOD THINGS START WITH A CONVERSATION</span>
-          <h2>Have something in mind?</h2>
-          <p>I’d love to hear about it.</p>
-        </div>
+        <h2>Want to work together?</h2>
         <Link className="btn btn-primary" to="/contact">
-          Say hello <Icon name="message" size={18} />
+          Get in touch <Icon name="arrow" size={17} />
         </Link>
       </section>
       {selected && (

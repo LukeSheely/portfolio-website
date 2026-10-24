@@ -11,6 +11,11 @@ import Home from "./pages/Home";
 import Projects from "./pages/Projects";
 import Contact from "./pages/Contact";
 import Icon from "./components/Icon";
+const pages = [
+  ["/", "Home", "home"],
+  ["/projects", "Projects", "grid"],
+  ["/contact", "Contact", "message"],
+];
 function Shell() {
   const { pathname } = useLocation();
   const [dark, setDark] = useState(() => {
@@ -44,6 +49,13 @@ function Shell() {
             Luke Sheely
           </span>
         </Link>
+        <nav className="top-nav" aria-label="Main navigation">
+          {pages.map(([to, label]) => (
+            <NavLink key={to} to={to} end={to === "/"}>
+              {label}
+            </NavLink>
+          ))}
+        </nav>
         <div className="top-actions">
           <span className="location">
             <Icon name="pin" size={14} /> Bellingham, WA
@@ -74,9 +86,9 @@ function Shell() {
             path="*"
             element={
               <div className="page">
-                <h1>Nothing here just yet.</h1>
+                <h1>Page not found.</h1>
                 <Link className="btn btn-primary" to="/">
-                  Back to overview
+                  Back to home
                 </Link>
               </div>
             }
@@ -84,11 +96,7 @@ function Shell() {
         </Routes>
       </main>
       <nav className="dock" aria-label="Main navigation">
-        {[
-          ["/", "Overview", "home"],
-          ["/projects", "Projects", "grid"],
-          ["/contact", "Contact", "message"],
-        ].map(([to, label, icon]) => (
+        {pages.map(([to, label, icon]) => (
           <NavLink key={to} to={to} end={to === "/"}>
             <Icon name={icon} />
             <span>{label}</span>
