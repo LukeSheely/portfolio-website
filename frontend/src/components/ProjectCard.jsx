@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import {
   animate,
   motion,
@@ -7,75 +7,25 @@ import {
 } from "motion/react";
 import Icon from "./Icon";
 import { category } from "../content";
+// Real screenshots and plots only; projects without one simply have no artwork.
+// Images wider than the frame (charts) are shown whole so their axes survive;
+// anything else fills the frame.
 export function ProjectArt({ project }) {
-  const kind = category(project);
+  const [fit, setFit] = useState("cover");
+  if (!project.image_url) return null;
   return (
-    <div
-      className={`project-art ${kind === "Games" ? "art-game" : kind === "Web apps" ? "art-macro" : /Beer/.test(project.title) ? "art-beer" : "art-stock"}`}
-      aria-hidden="true"
-    >
-      {kind === "Web apps" ? (
-        <div className="macro-preview">
-          <span>Daily overview</span>
-          <div className="rings">
-            <div>
-              <b>1,840</b>
-              <small>of 2,200 kcal</small>
-            </div>
-          </div>
-          <div className="macro-stats">
-            <span>
-              <i /> Protein <b>128 g</b>
-            </span>
-            <span>
-              <i /> Calories <b>84%</b>
-            </span>
-          </div>
-        </div>
-      ) : kind === "Games" ? (
-        <div className="polygon-preview">
-          {project.image_url ? (
-            <img
-              className="polygon-preview-image"
-              src={project.image_url}
-              alt=""
-            />
-          ) : (
-            <>
-              <div className="game-star">✦</div>
-              <div className="polygon square" />
-              <div className="polygon triangle" />
-              <div className="game-platform" />
-              <span>BETTER TOGETHER.</span>
-            </>
-          )}
-        </div>
-      ) : /Beer/.test(project.title) ? (
-        <div className="beer-preview">
-          <div className="orbital orbit-one" />
-          <div className="orbital orbit-two" />
-          <Icon name="chip" size={56} />
-          <span>INGREDIENTS → INTELLIGENCE</span>
-        </div>
-      ) : (
-        <div className="stock-preview">
-          <div>
-            <small>MODEL PERFORMANCE</small>
-            <strong>
-              +70% <Icon name="up" size={22} />
-            </strong>
-          </div>
-          <svg viewBox="0 0 380 110">
-            <path
-              d="M0 100 25 85 50 93 75 60 100 70 125 42 150 61 175 49 200 58 225 24 250 36 275 12 300 29 325 16 355 5 380 12"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-            />
-          </svg>
-          <span>DATA. PATTERNS. POSSIBILITIES.</span>
-        </div>
-      )}
+    <div className="project-art">
+      <img
+        src={project.image_url}
+        alt=""
+        loading="lazy"
+        style={{ objectFit: fit }}
+        onLoad={(e) => {
+          const { naturalWidth: w, naturalHeight: h, parentElement } = e.currentTarget;
+          if (w / h > parentElement.clientWidth / parentElement.clientHeight)
+            setFit("contain");
+        }}
+      />
     </div>
   );
 }
@@ -88,7 +38,7 @@ export function ProjectCard({ project, onSelect }) {
         <div className="project-title-row">
           <h3>{project.title}</h3>
           <span className="round-arrow">
-            <Icon name="up" size={18} />
+            <Icon name="chevron" size={18} />
           </span>
         </div>
         <p>{project.tech_stack}</p>
