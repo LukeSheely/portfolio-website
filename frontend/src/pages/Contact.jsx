@@ -89,12 +89,6 @@ export default function Contact() {
                 github.com/LukeSheely
               </a>
             </dd>
-            <dt>Résumé</dt>
-            <dd>
-              <a href={links.resume} target="_blank" rel="noreferrer">
-                Download PDF
-              </a>
-            </dd>
           </dl>
         </aside>
       </div>

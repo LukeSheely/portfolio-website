@@ -33,5 +33,4 @@ export const links = {
   email: "sheelyl2@wwu.edu",
   linkedin: "https://www.linkedin.com/in/luke-sheely-9987462b9/",
   github: "https://github.com/LukeSheely",
-  resume: "/resume.pdf",
 };

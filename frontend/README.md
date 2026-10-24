@@ -7,4 +7,4 @@ Committed snapshots in `frontend/src/data/` provide immediate content while the 
 
 Verification: production Vite build, desktop and 390px mobile browser checks, appearance switching, project category/search behavior, project dialog dismissal, and contact submission against the local Flask email logger. Live AWS SES delivery is not part of local verification.
 
-The public site now contains Home, Projects, and Contact only. Contact links (email, LinkedIn, GitHub, résumé) are defined once in `src/content.js`; the résumé is served from `public/resume.pdf`. Admin and Interests pages and their API registrations have been removed. Edit project content directly in `backend/data/projects.json`.
+The public site now contains Home, Projects, and Contact only. Contact links (email, LinkedIn, GitHub) are defined once in `src/content.js`. Admin and Interests pages and their API registrations have been removed. Edit project content directly in `backend/data/projects.json`.

@@ -19,14 +19,6 @@ export default function Home() {
             <Link className="btn btn-primary" to="/projects">
               View projects <Icon name="arrow" size={17} />
             </Link>
-            <a
-              className="btn"
-              href={links.resume}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Résumé <Icon name="up" size={16} />
-            </a>
           </div>
           <p className="hero-links">
             <a href={`mailto:${links.email}`}>{links.email}</a>
