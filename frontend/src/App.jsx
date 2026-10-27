@@ -55,6 +55,8 @@ function Shell() {
               {label}
             </NavLink>
           ))}
+          {/* Private research library: a separate static app, so use a full page load. */}
+          <a href="/research/">Research</a>
         </nav>
         <div className="top-actions">
           <span className="location">
@@ -102,6 +104,10 @@ function Shell() {
             <span>{label}</span>
           </NavLink>
         ))}
+        <a href="/research/">
+          <Icon name="book" />
+          <span>Research</span>
+        </a>
       </nav>
     </>
   );
